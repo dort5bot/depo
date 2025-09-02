@@ -49,8 +49,8 @@ API Key’leri sadece RAM’de decrypt et, diske şifrelenmiş halde yaz.
 keep_alive.py Render için mantıklı ama dışarıya açık health endpoint varsa rate limit koy.
 
 
+#🟢🟢🟢🟢🟢#
 SORU: Hnadler yapısı nasıl olmalı
-
 
 3) Hibrit model (en iyi pratik 🚀)
 Worker A: sık kullanılan ağır verileri (kline, funding, open interest vs) periyodik toplar → cache/db’ye yazar
