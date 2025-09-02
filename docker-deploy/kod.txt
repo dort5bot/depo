@@ -1,5 +1,5 @@
 
-# .github/workflows/docker-deploy.yml
+# 🟥🟥🟥.github/workflows/docker-deploy.yml
 # 🚀 Docker Build & Deploy (Render / Railway / Oracle VPS Auto Detect)
 # Secrets: GHCR_PAT, RENDER_DEPLOY_HOOK?, RAILWAY_DEPLOY_HOOK?, ORACLE_*?
 # 	Secret Adı	Açıklama
@@ -222,7 +222,7 @@ jobs:
 ########          ##############
 ########          ##############
 ########          ##############
-##Dockerfile
+##🟥🟥🟥Dockerfile
 FROM python:3.11-slim AS builder
 
 WORKDIR /app
@@ -261,8 +261,8 @@ CMD ["python", "main.py"]
 
 ################################
 #===============================
-#_______.dockerignore________________________
-########          ##############
+#🟥🟥🟥.dockerignore
+
 __pycache__
 *.pyc
 *.pyo
@@ -328,12 +328,10 @@ temp/
 
 
 ===============================
-_______________________________
-################################
-########          ##############
-########          ##############
-########          ##############
-##Gereken GitHub Secrets:
+🟥🟥🟥🟥🟥🟥🟥🟥🟥🟥🟥🟥
+🟥🟥🟥🟥🟥🟥🟥🟥🟥🟥🟥🟥
+
+##🟥🟥🟥Gereken GitHub Secrets:
 GHCR_PAT: "github_pat_..."           # Zorunlu
 RAILWAY_DEPLOY_HOOK: ""              # Opsiyonel
 RENDER_DEPLOY_HOOK: ""               # Opsiyonel  
