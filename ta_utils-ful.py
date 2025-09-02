@@ -76,6 +76,7 @@ VAR - Sembol formatı standardizasyonu
 
 ## 25. Comprehensive Testing:
 VAR - `main()` fonksiyonu ile kapsamlı test desteği
+## 26. gerkeli yerlerde açıklama ekleme (# ovcl hesaplama ...)
 
 
 * profesyonel seviyede hataya dayanıklı, yüksek performanslı ve geleceğe hazır bir TA kütüphanesi sağlamak
