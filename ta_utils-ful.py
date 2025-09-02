@@ -11,5 +11,6 @@ IO fonksiyonlarında cache kullanımı eksik.
 4. Error handling iyileştirmeleri:
 Daha spesifik hata mesajları ve fallback mekanizmaları.
 
+veri kaynağı kütüphanesine uygunluk (binace_api ccxt ise ccxt ye uyumlu kod yapı)
 
 """
