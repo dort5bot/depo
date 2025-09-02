@@ -1,5 +1,115 @@
 
-# 🟥🟥🟥.github/workflows/docker-deploy.yml
+##🟥1🟥🟥Dockerfile
+FROM python:3.11-slim AS builder
+
+WORKDIR /app
+
+# Python bağımlılıklarını kopyala ve kur
+COPY requirements.txt .
+RUN pip install --user -r requirements.txt
+
+FROM python:3.11-slim AS runtime
+
+WORKDIR /app
+
+# Non-root user oluştur
+RUN addgroup --system --gid 1001 appgroup && \
+    adduser --system --uid 1001 appuser
+
+# Builder stage'den Python paketlerini kopyala
+COPY --from=builder --chown=appuser:appgroup /root/.local /home/appuser/.local
+COPY --chown=appuser:appgroup . .
+
+# PATH'e user Python paketlerini ekle
+ENV PATH="/home/appuser/.local/bin:${PATH}"
+
+# Port bilgisi (3000 portu için)
+EXPOSE 3000
+
+# Health check - 3000 portunda çalıştığını varsayarak
+HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
+  CMD curl -f http://localhost:3000/health || exit 1
+
+# Non-root user ile çalıştır
+USER appuser
+
+# Container başlatıldığında çalışacak komut
+CMD ["python", "main.py"]
+
+#💢🟢💢🟢💢🟢💢🟢💢
+#💢🟢💢🟢💢🟢💢🟢💢
+#💢🟢💢🟢💢🟢💢🟢💢
+
+#🟥2🟥🟥.dockerignore
+
+__pycache__
+*.pyc
+*.pyo
+*.pyd
+.Python
+env/
+venv/
+.venv/
+.env
+.env.local
+.env.production
+.git
+.gitignore
+README.md
+Dockerfile
+.dockerignore
+.idea
+.vscode
+
+# ✅ ÖNERİLEN EKLEMELER:
+
+# Log dosyaları
+*.log
+logs/
+
+# Test ve debug dosyaları
+test/
+tests/
+*.cover
+.coverage
+htmlcov/
+.pytest_cache/
+
+# Build ve dist dosyaları
+build/
+dist/
+*.egg-info/
+*.egg
+.coverage
+
+# OS generated files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# Docker related (opsiyonel)
+docker-compose.yml
+docker-compose.*.yml
+.docker/
+
+# IDE specific
+*.swp
+*.swo
+*~
+
+# Temporary files
+tmp/
+temp/
+
+#💢🟢💢🟢💢🟢💢🟢💢
+#💢🟢💢🟢💢🟢💢🟢💢
+#💢🟢💢🟢💢🟢💢🟢💢
+
+# 🟥3🟥🟥.github/workflows/docker-deploy.yml
 # 🚀 Docker Build & Deploy (Render / Railway / Oracle VPS Auto Detect)
 # Secrets: GHCR_PAT, RENDER_DEPLOY_HOOK?, RAILWAY_DEPLOY_HOOK?, ORACLE_*?
 # 	Secret Adı	Açıklama
@@ -216,116 +326,10 @@ jobs:
           echo "Status: ${{ job.status }}"
 
 
-################################
-#===============================
-#_______________________________
-########          ##############
-########          ##############
-########          ##############
-##🟥🟥🟥Dockerfile
-FROM python:3.11-slim AS builder
-
-WORKDIR /app
-
-# Python bağımlılıklarını kopyala ve kur
-COPY requirements.txt .
-RUN pip install --user -r requirements.txt
-
-FROM python:3.11-slim AS runtime
-
-WORKDIR /app
-
-# Non-root user oluştur
-RUN addgroup --system --gid 1001 appgroup && \
-    adduser --system --uid 1001 appuser
-
-# Builder stage'den Python paketlerini kopyala
-COPY --from=builder --chown=appuser:appgroup /root/.local /home/appuser/.local
-COPY --chown=appuser:appgroup . .
-
-# PATH'e user Python paketlerini ekle
-ENV PATH="/home/appuser/.local/bin:${PATH}"
-
-# Port bilgisi (3000 portu için)
-EXPOSE 3000
-
-# Health check - 3000 portunda çalıştığını varsayarak
-HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
-  CMD curl -f http://localhost:3000/health || exit 1
-
-# Non-root user ile çalıştır
-USER appuser
-
-# Container başlatıldığında çalışacak komut
-CMD ["python", "main.py"]
-
-################################
-#===============================
-#🟥🟥🟥.dockerignore
-
-__pycache__
-*.pyc
-*.pyo
-*.pyd
-.Python
-env/
-venv/
-.venv/
-.env
-.env.local
-.env.production
-.git
-.gitignore
-README.md
-Dockerfile
-.dockerignore
-.idea
-.vscode
-
-# ✅ ÖNERİLEN EKLEMELER:
-
-# Log dosyaları
-*.log
-logs/
-
-# Test ve debug dosyaları
-test/
-tests/
-*.cover
-.coverage
-htmlcov/
-.pytest_cache/
-
-# Build ve dist dosyaları
-build/
-dist/
-*.egg-info/
-*.egg
-.coverage
-
-# OS generated files
-.DS_Store
-.DS_Store?
-._*
-.Spotlight-V100
-.Trashes
-ehthumbs.db
-Thumbs.db
-
-# Docker related (opsiyonel)
-docker-compose.yml
-docker-compose.*.yml
-.docker/
-
-# IDE specific
-*.swp
-*.swo
-*~
-
-# Temporary files
-tmp/
-temp/
-
+#💢💢💢💢💢💢💢💢💢💢💢💢
+#💢💢💢💢💢💢💢💢💢💢💢💢
+#💢💢💢💢💢💢💢💢💢💢💢💢
+#💢💢💢💢💢💢💢💢💢💢💢💢
 
 ===============================
 🟥🟥🟥🟥🟥🟥🟥🟥🟥🟥🟥🟥
