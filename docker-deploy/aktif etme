@@ -1,0 +1,42 @@
+1. Personal Access Token'ını oluşturdun ve GHCR_PAT olarak GitHub repo’na secret olarak ekle
+
+2. Dockerfile'ın Uygun Olmas
+
+3. Git'e Commit ve Push Et
+Şimdi aşağıdaki komutlarla workflow'u aktif hale getiriyorsun:
+Codespaces Üzerinde Commit & Push Adımları
+            1. Codespaces’i Başlat
+            GitHub reposuna git → sağ üstteki Code butonuna tıkla
+            Açılan menüden Codespaces sekmesini seç
+            New codespace oluştur (genellikle main branch seçili olur)
+            Birkaç saniye içinde VSCode benzeri web editör açılır
+            
+            2. Workflow Dosyasını Oluştur veya Düzenle
+            Sol taraftaki dosya gezgininden .github/workflows klasörüne git
+            docker-deploy.yml dosyasını oluştur veya mevcutsa aç
+            İçine workflow kodlarını yapıştır (ya da düzenle)
+            Dosyayı kaydet (Ctrl+S veya otomatik kaydediyorsa devam et)
+            
+            3. Terminali Aç
+            Üst menüden Terminal > New Terminal seçeneğine tıkla
+            Alt tarafta terminal penceresi açılır, genellikle proje kök dizinindesindir
+            
+            4. Git Durumunu Kontrol Et
+            git status
+            Yeni eklediğin veya değiştirdiğin dosya 
+            .github/workflows/docker-deploy.yml olarak görünecek.
+            
+            5. Dosyayı Git’e Ekle
+            git add .github/workflows/docker-deploy.yml
+            
+            
+            6. Commit Mesajı ile Kaydet
+            git commit -m "Add GHCR + deploy workflow"
+            
+            7. Değişiklikleri GitHub’a Gönder (Push)
+            git push origin main
+
+
+Push edildikten sonra, GitHub Actions otomatik olarak çalışacak:
+GHCR’ye imaj push
+Secret’lar varsa: Render / Railway / Oracle deploy
