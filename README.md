@@ -1,5 +1,8 @@
 dort5bot/  depo
 
+TELEGRAM BOTU
+telegram botu: veri alır, analiz yapar, alarm üretir, trade yapar 
+
 BOT OLUŞTURMA SIRASI
 * GHCR modunda repo
 * başlatma arayüzü : main.py
