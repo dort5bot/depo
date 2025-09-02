@@ -56,7 +56,7 @@ Lead–Lag (BTC): 2 bar | corr=0.68
 
 
 
-###⚡️⚡️ 2. varsayılan Tarama
+###⚡️⚡️ 2. Market Tarama
 ```
 /t [sayı]
 ```
