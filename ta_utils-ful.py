@@ -2,81 +2,35 @@
 """
 İşte kodun tüm özellikleri:
 ## (gerekiyorsa) * Alpha signals mekanizması iyileştirmeleri yap)
-## 1. Safe Column Access Mekanizması:
-Tüm TA fonksiyonlarında `safe_column_access` kullanımı
+## Gerekli yerlerde açıklama ekleme (# ovcl hesaplama ... # TA_HESAPLAMA BÖLÜMÜ..)
 
-## 2. DataFrame Validation:
-VAR - `validate_dataframe` fonksiyonu ile tüm fonksiyonlarda DataFrame kontrolü
+## 1. Safe Column Access Mekanizması: Tüm TA fonksiyonlarında `safe_column_access` kullanımı
+## 2. DataFrame Validation: `validate_dataframe` fonksiyonu ile tüm fonksiyonlarda DataFrame kontrolü
+## 3. Cache Mekanizması: TAM - Gelişmiş `TACache` sınıfı ile LRU ve TTL özellikli cache
+## 4. Thread Safety: `threading.RLock` ile thread-safe cache operasyonları
+## 5. Error Handling: Kapsamlı try-catch blokları ve exception yönetimi
+## 6. Config Fallback Mekanizması: `SafeConfig` sınıfı ile config yüklenemezse default değerler
+## 7. Logging Sistemi: Detaylı logging ve log seviyesi yönetimi
+## 8. Metrics ve Monitoring: `TAMetrics` sınıfı ve `get_detailed_metrics` fonksiyonu
+## 9. Asynchronous IO: `async/await` desteği ve Binance API entegrasyonu
+## 10. Retry Mekanizması: Exponential backoff ile otomatik retry
+## 11. Resource Management: `MAX_WORKERS` kontrolü ve resource sınırlaması
+## 12. Type Hints: Kapsamlı type annotation desteği
+## 13. Data Classes: `@dataclass` kullanımı ile yapılandırılmış veri
+## 14. LRU Cache: OrderedDict ile Least Recently Used cache temizleme
+## 15. Input Validation: Parametre validasyonu ve boundary kontrolü
+## 16. Memory Management: Cache size limiti ve otomatik cleanup
+## 17. Health Check: Sistem sağlık durumu kontrolü
+## 18. Graceful Degradation: Hata durumunda default değerlerle çalışmaya devam
+## 19. Modular Design: Bağımsız modüller ve clear interface'ler
+## 20. Backward Compatibility: `from __future__ import annotations` ile Python uyumluluğu
+## 21. Performance Optimization: ThreadPoolExecutor ile paralel hesaplama
+## 22. Cache Statistics: Hit/miss oranları ve performans metrikleri
+## 23. Configurable Parameters: Dinamik olarak config'den alınan parametreler
+## 24. Symbol Normalization: Sembol formatı standardizasyonu
+## 25. Comprehensive Testing: `main()` fonksiyonu ile kapsamlı test desteği
 
-## 3. Cache Mekanizması:
-TAM - Gelişmiş `TACache` sınıfı ile LRU ve TTL özellikli cache
 
-## 4. Thread Safety:
-VAR - `threading.RLock` ile thread-safe cache operasyonları
-
-## 5. Error Handling:
-VAR - Kapsamlı try-catch blokları ve exception yönetimi
-
-## 6. Config Fallback Mekanizması:
-VAR - `SafeConfig` sınıfı ile config yüklenemezse default değerler
-
-## 7. Logging Sistemi:
-VAR - Detaylı logging ve log seviyesi yönetimi
-
-## 8. Metrics ve Monitoring:
-VAR - `TAMetrics` sınıfı ve `get_detailed_metrics` fonksiyonu
-
-## 9. Asynchronous IO:
-VAR - `async/await` desteği ve Binance API entegrasyonu
-
-## 10. Retry Mekanizması:
-VAR - Exponential backoff ile otomatik retry
-
-## 11. Resource Management:
-VAR - `MAX_WORKERS` kontrolü ve resource sınırlaması
-
-## 12. Type Hints:
-VAR - Kapsamlı type annotation desteği
-
-## 13. Data Classes:
-VAR - `@dataclass` kullanımı ile yapılandırılmış veri
-
-## 14. LRU Cache:
-VAR - OrderedDict ile Least Recently Used cache temizleme
-
-## 15. Input Validation:
-VAR - Parametre validasyonu ve boundary kontrolü
-
-## 16. Memory Management:
-VAR - Cache size limiti ve otomatik cleanup
-
-## 17. Health Check:
-VAR - Sistem sağlık durumu kontrolü
-
-## 18. Graceful Degradation:
-VAR - Hata durumunda default değerlerle çalışmaya devam
-
-## 19. Modular Design:
-VAR - Bağımsız modüller ve clear interface'ler
-
-## 20. Backward Compatibility:
-VAR - `from __future__ import annotations` ile Python uyumluluğu
-
-## 21. Performance Optimization:
-VAR - ThreadPoolExecutor ile paralel hesaplama
-
-## 22. Cache Statistics:
-VAR - Hit/miss oranları ve performans metrikleri
-
-## 23. Configurable Parameters:
-VAR - Dinamik olarak config'den alınan parametreler
-
-## 24. Symbol Normalization:
-VAR - Sembol formatı standardizasyonu
-
-## 25. Comprehensive Testing:
-VAR - `main()` fonksiyonu ile kapsamlı test desteği
-## 26. gerkeli yerlerde açıklama ekleme (# ovcl hesaplama ...)
 
 
 * profesyonel seviyede hataya dayanıklı, yüksek performanslı ve geleceğe hazır bir TA kütüphanesi sağlamak
