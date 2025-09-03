@@ -1,7 +1,7 @@
 #binance_api.py 903-2031 satır_sayısı:1604
 '''
 FUL PEP8 UYUMLU
-* PEP 8 standartlarına uygun mu
+* PEP 8 standartlarına uygun
 * Type Hints: Tüm fonksiyonlara tam type hint
 * Docstrings: Tüm public metodlar için detaylı docstring
 
