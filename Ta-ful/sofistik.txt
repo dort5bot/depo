@@ -1,0 +1,72 @@
+ta_utils (sofi)904-0031
+
+* placeholderler var > fonksiyon eklenmeli
+* geliştirilirse sıradışı birşey olacak
+
+
+E>	Herşeyin olduğu > ta_utils (sofi)904-0031
+Y>	Standart işlerin olduğu dosya > 904-0031 sonrasındaki dosya
+	
+	Eski Hesaplama
+Yapı	
+	E> Modüler, çok fazla yöntem içeriyor (Kalman, Hilbert, Entropy, Rejim, Lead-Lag...)
+	Y> Kompakt, daha doğrudan: RSI, MACD, ADX gibi klasik TA göstergeleriyle hesaplanan bir composite score
+Komplekslik	
+	E> Yüksek (çeşitli teorik modeller ve entropy analizleri)
+	Y> Düşük-Orta (klasik teknik analiz indikatörlerinin normalize edilip birleştirilmesi)
+Şeffaflık / İzlenebilirlik	
+	E> Düşük (birleşik skorun nasıl üretildiği belirsiz, black-box’a yakın)
+	Y> Yüksek (her bir sinyal açıkça görülebilir, ağırlıklar belirli)
+Hesaplama Maliyeti	
+	E> Yüksek (bazı hesaplamalar CPU paralelizasyon gerektiriyor)
+	Y> Düşük (veya optimize edilebilir, hızlı çalışan göstergeler)
+Sinyal Kaynağı Çeşitliliği	
+	E> Fazla ama bazıları dolgu (e.g. return np.nan / return 0.0)
+	Y> Az ama anlamlı ve test edilmiş göstergeler kullanılmış
+
+
+2. Hangi Daha İsabetli?	
+	
+Gerçek cevap:	
+Bu soruya net cevap vermek için her iki yöntemin gerçek finansal veri üzerinde out-of-sample performans kıyaslaması yapılması gerekir.	
+Ama elimizdeki bilgilerle teorik ve mühendislik açılarından değerlendirme yapabiliriz.	
+	
+A) Eski Yöntem – Avantajlar & Dezavantajlar	
+Avantajlar:	
+Çok çeşitli veri kaynakları: Kalman filter (trend smoothing), Hilbert (frekans analizi), entropy (patern karmaşıklığı), rejim tespiti (trend vs range), lead-lag ilişkileri.	
+Potansiyel olarak daha sofistike sinyaller.	
+Dezavantajlar:	
+Bazı fonksiyonlar eksik veya “placeholder” (return np.nan veya 0.0), bu nedenle hesaplanan skorun güvenilirliği tartışmalı.	
+Fazla karmaşık olabilir – özellikle pratikte overfitting riski ve üretim ortamına taşıma zorluğu.	
+Daha fazla veri ve hesaplama hatasına açık.	
+B) Yeni Yöntem – Avantajlar & Dezavantajlar	
+Avantajlar:	
+RSI, MACD, ADX gibi kanıtlanmış ve test edilmiş indikatörlerle çalışıyor.	
+Normalize edilip ağırlıklı birleştirilmiş olması daha istikrarlı skorlar üretir.	
+Rolling ortalama ile gürültü bastırma yapılmış (sinyal kalitesi daha yüksek olabilir).	
+Daha kolay bakım ve takip (debug edilebilirlik yüksek).	
+Dezavantajlar:	
+Piyasa koşullarına göre bazen yetersiz kalabilir. (örnek: sideways marketlerde RSI+MACD sinyalleri zayıf olabilir)	
+Kalman, entropy, rejim gibi daha sofistike analizleri içermiyor.	
+Hangi Daha İsabetli Öngörü Sağlar?	
+Senaryo	Öngörüde Daha Başarılı Yöntem
+Genel piyasa koşullarında hızlı ve istikrarlı alpha sinyali	✅ Yeni Yöntem
+Araştırma ve keşif amaçlı sinyal üretimi, özellikle non-linear sistemlerde	🔄 Eski Yöntem (düzgün implementasyonla)
+Zaman-serisi tabanlı stratejilerde tahmin gücü	🔄 Eski Yöntem (Kalman, entropy vs ile)
+Düşük gecikmeli sinyal üretimi ve işlem uygulamaları	✅ Yeni Yöntem
+	
+Tavsiye	
+Uygulama amacınız işlem stratejisi üretmekse (özellikle gerçek zamanlı sinyal):	
+→ Yeni yöntem daha doğru ve güvenilir sinyal üretme eğilimindedir.	
+	
+Araştırma/deneysel analiz/akademik keşif amacıyla kullanıyorsanız:	
+→ Eski yöntem zengin sinyal çeşitliliğiyle daha uygun, ancak mutlaka eksik fonksiyonlar tamamlanmalı.	
+	
+✅ Sonuç	
+	
+Bugünkü haliyle (eksik fonksiyonlar ve dummy return'ler varken):	
+➡️ Yeni hesaplama yöntemi daha isabetli ve güvenilir bir alpha öngörüsü sunar.	
+	
+Ama eski yöntem geliştirilmeye açıksa, uzun vadede daha sofistike sinyaller üretebilir.	
+	
+	
