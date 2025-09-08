@@ -19,6 +19,7 @@ from contextlib import asynccontextmanager
 import aiohttp
 from aiohttp import web
 from dotenv import load_dotenv
+from aiogram import BaseMiddleware
 from aiogram import Bot, Dispatcher, Router
 from aiogram.types import Update, Message
 from aiogram.webhook.aiohttp_server import SimpleRequestHandler, setup_application
@@ -250,6 +251,19 @@ async def on_shutdown(bot: Bot) -> None:
             logger.info("✅ Webhook deleted")
     except Exception as e:
         logger.warning(f"⚠️ Failed to delete webhook: {e}")
+
+
+# Middleware desteği 
+class ExampleMiddleware(BaseMiddleware):
+    async def __call__(self, handler, event, data):
+        # Pre-processing
+        result = await handler(event, data)
+        # Post-processing
+        return result
+
+# Dispatcher'a ekleme
+dispatcher.update.outer_middleware(ExampleMiddleware())
+
 
 # ---------------------------------------------------------------------
 # Main Application Factory
