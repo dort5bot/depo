@@ -3,6 +3,8 @@
 handlers/p_handler.py
 Binance datasında küçük/büyük fark olsa da eşleşir.
 handler_loader.py uyumlu
+
+Bu handler, Binance API'sini kullanarak coin verilerini çekecek ve aiogram 3.x Router pattern'ine uygun şekilde çalışacak
 async/await pattern'ine uygun + aiogram 3.x e uygun + Router pattern yapıda +  PEP8 + type hints + docstring + async yapı + singleton + logging olacak yapıda
 Mevcut yorum blokları (ör: # Rate limiting - HTTP) ekle
 Aiogram 3.x Architecture
