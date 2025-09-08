@@ -1,0 +1,8 @@
+
+Binance ile ilgili util fonksiyonlardan destek alacak olası komutlar
+Henüz handler tarafını görmedik ama utils/binance yapısından gelenler:
+/price [coin] → Coin fiyatı
+/depth [coin] → Order book derinliği
+/ohlcv [coin] → Kline / mum datası
+/funding [coin] → Futures funding rate
+
