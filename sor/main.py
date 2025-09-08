@@ -125,6 +125,18 @@ async def lifespan():
         dispatcher = Dispatcher()
         dispatcher.include_router(main_router)
         dispatcher.errors.register(error_handler)
+
+
+# Middleware desteği 
+class ExampleMiddleware(BaseMiddleware):
+    async def __call__(self, handler, event, data):
+        # Pre-processing
+        result = await handler(event, data)
+        # Post-processing
+        return result
+
+# Dispatcher'a ekleme
+dispatcher.update.outer_middleware(ExampleMiddleware())
         
         # Initialize Binance API (only if trading is enabled)
         if app_config.ENABLE_TRADING:
@@ -252,17 +264,6 @@ async def on_shutdown(bot: Bot) -> None:
     except Exception as e:
         logger.warning(f"⚠️ Failed to delete webhook: {e}")
 
-
-# Middleware desteği 
-class ExampleMiddleware(BaseMiddleware):
-    async def __call__(self, handler, event, data):
-        # Pre-processing
-        result = await handler(event, data)
-        # Post-processing
-        return result
-
-# Dispatcher'a ekleme
-dispatcher.update.outer_middleware(ExampleMiddleware())
 
 
 # ---------------------------------------------------------------------
