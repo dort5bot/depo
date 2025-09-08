@@ -5,14 +5,13 @@ NOT > ANA BİLGİ İSKELET İÇİNDE
 /ap
 #
 #
-
+🟧🟧🟧🟧🟧🟧🟧🟧🟧🟧🟧🟧
 handlers/p_handler.py
 Binance datasında küçük/büyük fark olsa da eşleşir.
 async uyumlu + PEP8 + type hints + docstring + async yapı + singleton + logging olacak
   
-/p<n|d> <coin|sayı>
 /p →CONFIG.SCAN_SYMBOLS default(filtre ekler btc ile btcusdt sonuç verir)
-/Pn → sayı girilirse limit = n, hacimli ilk n coin.
+/Pn → hacimli ilk n coin.  default 20 tane (örnek /p30 /p40 ... destekler)
 /Pd → düşenler coinler. default 20 tane
 /Pd 30 → düşenler 30 tane
 /P coin1 coin2... → manuel seçili coinler.
@@ -21,7 +20,6 @@ async uyumlu + PEP8 + type hints + docstring + async yapı + singleton + logging
 örnek:
 /p
 
-Debot2🟢, [7.09.2025 17:08]
 📈 SCAN_SYMBOLS (Hacme Göre)
 ⚡Coin | Değişim | Hacim | Fiyat
 1. ETH: 0.23% | $888.8M | 4308.17
@@ -30,6 +28,16 @@ Debot2🟢, [7.09.2025 17:08]
 4. SOL: 0.70% | $268.1M | 203.75
 ...
 
+/p22
+
+📈 En Çok Yükselen 22 Coin
+⚡Coin | Değişim | Hacim | Fiyat
+1. OPEN: 656.60% | $224.8M | 1.5132
+2. CREAM: 65.35% | $0.3M | 2.1
+3. PNT: 45.23% | $0.3M | 0.035
+4. SOMI: 44.54% | $489.4M | 1.6372
+5. WLD: 42.98% | $469.9M | 1.497
+...
 
 /pd
 📈 Düşüş Trendindeki Coinler
