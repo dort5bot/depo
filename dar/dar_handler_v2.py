@@ -1,8 +1,8 @@
 # handlers/dar_handler.py
+"""
+HARİKA
 # Aiogram 3.x uyumlu
 # Proje yedekleme ve komut tarama yardımcı handler
-#
-"""
 /dar → proje ağaç yapısını mesaj olarak gösterir.
 /dar k → tüm @router.message(Command(...)) komutlarını bulur
 /dar t → proje ağacını .txt dosyası olarak gönderir.
