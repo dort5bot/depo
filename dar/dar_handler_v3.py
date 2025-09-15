@@ -1,10 +1,11 @@
 # handlers/dar_handler.py
 """
-DENENMEDİ
+v3
 ✅ Özellikler:
  Aiogram 3.x uyumlu
 /dar → Proje ağacını mesaj olarak (çok büyükse .txt dosyası olarak) gönderir.
-/dar k → Tüm Python dosyalarında @router.message(Command(...)) komutlarını bulur ve alfabetik listeler.
+/dar k → Tüm Python dosyalarında @router.message(Command(...)) komutlarını bulur 
+ve handlere göre alfabetik listeler.
 /dar t → Proje ağacını .txt dosyası olarak gönderir.
 /dar Z → Tüm projeyi .zip dosyası olarak gönderir.
 """
