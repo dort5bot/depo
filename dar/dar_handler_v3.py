@@ -1,6 +1,9 @@
 # handlers/dar_handler.py
 """
-v3
+v3 handler sirali, 
+komut aciklama yok (commat_info)
+gelisim sırasında anlamlı 
+kod kisa
 ✅ Özellikler:
  Aiogram 3.x uyumlu
 /dar → Proje ağacını mesaj olarak (çok büyükse .txt dosyası olarak) gönderir.
