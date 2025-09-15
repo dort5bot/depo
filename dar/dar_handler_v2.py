@@ -1,6 +1,9 @@
 # handlers/dar_handler.py
 """
-HARİKA
+v2 komut sirali, 
+komut aciklama yok (commat_info)
+aktif dönemde anlamlı 
+kod kisa
 # Aiogram 3.x uyumlu
 # Proje yedekleme ve komut tarama yardımcı handler
 /dar → proje ağaç yapısını mesaj olarak gösterir.
