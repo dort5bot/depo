@@ -17,7 +17,7 @@ Hata Yönetimi: Tüm komutlar için ayrı ayrı exception handling
 Format İyileştirmeleri: Çıktı formatlarını gerekirse düzenle
 ⚡️⚡️⚡️⚡️⚡️⚡️⚡️⚡️⚡️⚡️⚡
 
-# TA Handler Komutları ve Kullanım Kılavuzu
+# analiz Handler Komutları ve Kullanım Kılavuzu
 
 ## Temel Komutlar
 ###⚡️⚡ özet
