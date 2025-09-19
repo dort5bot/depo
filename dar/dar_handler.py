@@ -8,7 +8,7 @@ komut aciklaması yok (commat_info)> aktif dönemde anlamlı
 . ile başlayan dosyalar ve __pycache__ gibi klasörler yok sayılır.
 /dar → proje ağaç yapısını mesaj olarak gösterir.
 /dar k → tüm @router.message(Command(...)) komutlarını bulur
-/dar t → proje ağaç yapısı+dosyaların içeriğini birleştirip, her dosya için başlık ekleyerek mesaj halinde gönder.txt dosyası olarak gönderir.
+/dar t → proje ağaç yapısı + dosya içeriğini birleştirip, her dosya için başlık ekleyerek mesaj halinde .txt dosyası olarak gönderir.
 /dar Z → tüm proje klasörünü .zip dosyası olarak gönderir.
 # zaman format: mbot1_0917_2043 (aygün_saaddkika) ESKİ: "%Y%m%d_%H%M%S" = YılAyGün_SaatDakikaSaniye
 """
