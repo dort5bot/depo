@@ -1,0 +1,27 @@
+Özetle:
+Deploy Hook (Webhook) → Basit, tek URL, “en son image’i deploy et” demek için.
+Render API → Programatik, detaylı kontrol, istediğin image/tag’i seçerek deploy yapabilirsin.
+
+
+curl -i -X POST "${{ env.RENDER_DEPLOY_HOOK }}"
+Buraya webhook URL'sini yazıyorsun. Bu, Render servisini tetikler, ancak hangi image deploy edilir kontrol edemezsin, Render kendi en son imajını seçer.
+tam kontrol istiyorsan:
+Render API kullanman, API Key ve servis ID ile istediğin image tag’iyle deploy yapman lazım.
+
+
+1. Render Deploy Hook (Webhook)
+Render panelinde servis için oluşturulan özel, gizli bir URL.
+Bu URL'ye basit bir HTTP POST yapınca Render, son commit / son image'ı otomatik deploy eder.
+Senin workflow’daki curl -X POST ${RENDER_DEPLOY_HOOK} tam olarak bu.
+Çok basit, kimlik doğrulaması URL’nin gizliliğine dayanır.
+Ancak hangi image/tag deploy edileceğini seçme şansı yok, Render kendi pipeline’ına göre otomatik en son sürümü alır.
+
+2. Render API
+Render’ın resmi REST API'si.
+Çok daha esnek ve güçlü.
+Deploy işlemini tetiklerken, hangi Docker image’i deploy edeceğini belirtebilirsin.
+Kimlik doğrulama için API Key gerekir.
+
+Örnek endpoint:
+POST https://api.render.com/deploy/{serviceId}
+Body ile image tag gibi detaylar verilir.
