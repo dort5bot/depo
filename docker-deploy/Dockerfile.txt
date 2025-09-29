@@ -1,0 +1,90 @@
+#final-3
+#	Katman temizliği için detaylı temizlik
+#	Gereksiz dosyaların image'e girmesini engelle
+#	Daha esnek konteyner davranışı
+#	Docker image’ine bilgi göm
+#	Build süresini optimize eder, gelişmiş cache
+#	Daha küçük image için ama dikkatli olunmalı
+#	Daha az yetkili kullanıcı kullanımı
+
+# ----------------------
+# Build Aşaması
+# ----------------------
+FROM python:3.11-slim AS builder
+
+WORKDIR /app
+
+# Gereken sistem bağımlılıklarını kur
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    gcc \
+    g++ \
+    python3-dev \
+    libc-dev \
+    libffi-dev \
+    curl \
+    && apt-get clean \
+    && rm -rf /var/lib/apt/lists/*
+
+# Pip araçlarını güncelle (cache’siz)
+RUN pip install --no-cache-dir --upgrade pip setuptools wheel
+
+# Bağımlılık dosyası
+COPY requirements.txt .
+
+# Wheel olarak bağımlılıkları indir
+RUN pip wheel --no-cache-dir --wheel-dir /app/wheels -r requirements.txt
+
+# requirements.txt'yi de wheels klasörüne ekle (runtime’da lazım)
+RUN cp requirements.txt /app/wheels/
+
+
+# ----------------------
+# Runtime Aşaması
+# ----------------------
+FROM python:3.11-slim AS runtime
+
+WORKDIR /app
+
+# Sadece minimum bağımlılıklar
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    curl \
+    && apt-get clean \
+    && rm -rf /var/lib/apt/lists/*
+
+# Uygulama için ayrı kullanıcı oluştur
+RUN groupadd --gid 1001 appgroup && \
+    useradd --uid 1001 --gid appgroup --shell /usr/sbin/nologin --create-home appuser
+
+# Python ortam değişkenleri ile optimize çalıştırma
+ENV PYTHONUNBUFFERED=1 \
+    PYTHONDONTWRITEBYTECODE=1 \
+    PYTHONPYCACHEPREFIX=/tmp \
+    PIP_NO_CACHE_DIR=1
+
+# Derlenmiş wheel dosyalarını ve requirements.txt'yi kopyala
+COPY --from=builder /app/wheels /wheels
+
+# Wheel'lardan bağımlılıkları yükle ve wheel'ları temizle
+RUN pip install --no-index --find-links=/wheels -r /wheels/requirements.txt \
+    && rm -rf /wheels
+
+# Gerekli uygulama dosyalarını kopyala
+# NOT: Gereksiz dosyaların (.git, tests vs.) kopyalanmasını engellemek için hedefli COPY yapılır
+COPY --chown=appuser:appgroup main.py .  # örnek dosya
+COPY --chown=appuser:appgroup app/ ./app/
+
+# Metadata ekle (isteğe bağlı ama faydalı)
+LABEL maintainer="sen@example.com" \
+      org.opencontainers.image.source="https://github.com/kullanici/proje" \
+      org.opencontainers.image.licenses="MIT"
+
+# Health check endpoint (isteğe bağlı)
+EXPOSE 3000
+HEALTHCHECK --interval=30s --timeout=10s --start-period=10s --retries=3 \
+  CMD curl -f http://localhost:3000/health || exit 1
+
+# Uygulama kullanıcısına geç
+USER appuser
+
+# Uygulama başlat
+CMD ["python", "main.py"]
