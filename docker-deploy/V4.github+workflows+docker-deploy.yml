@@ -1,13 +1,12 @@
-1. Multi-container deploy: Tek VPS üzerinde staging/prod için birden fazla container (primary, secondary) çalışabilir.
-2. Dinamik port ve isimlendirme: Port ve container adı otomatik atanır → çakışma riski yok.
-3. Staging otomatik, production manuel: Güvenli ve profesyonel CI/CD süreci.
-4. Üç platform destekli: Oracle, Hetzner, Render.
-5. Dummy pytest: Pipeline’ın sağ
-
-
-
-
 name: 🐳 Docker Build & Deploy (Multi-Container Staging→Production)
+#.github/workflows/docker-deploy.yml
+#1. Multi-container deploy: Tek VPS üzerinde staging/prod için birden fazla container (primary, secondary) çalışabilir.
+#2. Dinamik port ve isimlendirme: Port ve container adı otomatik atanır → çakışma riski yok.
+#3. Staging otomatik, production manuel: Güvenli ve profesyonel CI/CD süreci.
+#4. Üç platform destekli: Oracle, Hetzner, Render.
+#5. Dummy pytest: Pipeline’ın sağ
+#6.
+
 
 on:
   push:
