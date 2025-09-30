@@ -1,0 +1,56 @@
+# Haskell build artifacts
+dist/
+dist-newstyle/
+.stack-work/
+*.hi
+*.o
+*.chi
+*.chs.h
+*.dyn_o
+*.dyn_hi
+
+# Cabal / Stack specific
+.cabal-sandbox/
+cabal.sandbox.config
+*.cabal.user
+package.yaml
+*.local
+
+# Stack configuration files
+.stack-work/
+stack.yaml.lock
+
+# Binary output
+*.exe
+*.out
+*.app
+*.bin
+
+# Logs
+*.log
+
+# MacOS-specific
+.DS_Store
+
+# VSCode editor settings (optional)
+.vscode/
+
+# Docker-related
+*.tar
+docker-compose.override.yml
+
+# Ignore dotenv or secret config (if any)
+.env
+.env.*
+
+# GitHub Actions cache or temp (optional)
+.github/workflows/*-cache/
+
+# Node (if frontend involved)
+node_modules/
+
+# Ignore image files or generated assets (optional)
+*.png
+*.jpg
+*.jpeg
+*.svg
