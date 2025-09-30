@@ -1,6 +1,8 @@
 name: 🐳 Docker Build & Deploy (Controlled)
 
 on:
+#v2
+#2asamali sistem (test + manuel Yukleme)
   # Kod push olduğunda sadece build & test çalışır
   push:
     branches: [main, master]
