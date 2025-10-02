@@ -7,6 +7,13 @@ Komutlar:
 - /pl [limit]     → En çok düşen coinleri listeler
 - /test_api       → Binance API bağlantı testi yapar
 Rapor formatı (coin adı, değişim %, hacim, fiyat )
+örnek:
+📈 En Çok Yükselen 22 Coin
+⚡Coin | Değişim | Hacim | Fiyat
+1. OPEN: 656.60% | $224.8M | 1.5132
+
+Otomatik volume formatlama (M/K)
+Akıllı fiyat formatlama
 
 
 🟧🟧🟧🟧🟧🟧🟧🟧🟧🟧🟧
