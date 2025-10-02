@@ -1,5 +1,15 @@
 
-🟧🟧🟧🟧🟧🟧🟧🟧🟧🟧🟧🟧
+🟧
+Binance API üzerinden coin verilerini sorgulayan handler.
+Komutlar:
+- /p [symbols...] → Seçilen coinlerin veya config SCAN_SYMBOLS listesinin fiyatlarını gösterir
+- /pg [limit]     → En çok yükselen coinleri listeler
+- /pl [limit]     → En çok düşen coinleri listeler
+- /test_api       → Binance API bağlantı testi yapar
+Rapor formatı (coin adı, değişim %, hacim, fiyat )
+
+
+🟧🟧🟧🟧🟧🟧🟧🟧🟧🟧🟧
 handlers/p_handler.py
 Binance datasında küçük/büyük fark olsa da eşleşir.
 handler_loader.py uyumlu
