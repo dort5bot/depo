@@ -1,6 +1,13 @@
 
 🟧
-Binance API üzerinden coin verilerini sorgulayan handler.
+Binance API ile çoklu kullanıcı desteği sağlayan handler
+Otomatik volume formatlama (M/K)
+Akıllı fiyat formatlama
+USDT pairs ile sınırla
+
+* tutarlı olanları bakım kolaylığı için class blokları halinde
+
+
 Komutlar:
 - /p [symbols...] → Seçilen coinlerin veya config SCAN_SYMBOLS listesinin fiyatlarını gösterir
 - /pg [limit]     → En çok yükselen coinleri listeler
@@ -12,8 +19,7 @@ Rapor formatı (coin adı, değişim %, hacim, fiyat )
 ⚡Coin | Değişim | Hacim | Fiyat
 1. OPEN: 656.60% | $224.8M | 1.5132
 
-Otomatik volume formatlama (M/K)
-Akıllı fiyat formatlama
+
 
 
 🟧🟧🟧🟧🟧🟧🟧🟧🟧🟧🟧
