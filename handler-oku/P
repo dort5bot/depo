@@ -4,6 +4,11 @@ Binance API ile çoklu kullanıcı desteği sağlayan handler
 Otomatik volume formatlama (M/K)
 Akıllı fiyat formatlama
 USDT pairs ile sınırla
+🕒 TTL Cache: Her kullanıcı + endpoint için 60 saniye boyunca sonuçlar sakla
+🔄 Otomatik yenilenme: TTL dolduğunda bir sonraki istekte yeni veri çek
+👥 Çoklu kullanıcı güvenli:	Cache anahtarı (user_id, endpoint) kombinasyonu.
+🧹 Otomatik temizlik:	Eski cache kayıtları TTL dolunca sil
+
 
 * tutarlı olanları bakım kolaylığı için class blokları halinde
 
