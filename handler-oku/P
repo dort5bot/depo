@@ -1,9 +1,10 @@
-
 🟧
 Binance API ile çoklu kullanıcı desteği sağlayan handler
 Otomatik volume formatlama (M/K)
 Akıllı fiyat formatlama
 USDT pairs ile sınırla
+Binance datasında küçük/büyük fark olsa da eşleşir.
+(/p bnb, /p BNB sonuç üretsin)
 🕒 TTL Cache: Her kullanıcı + endpoint için 60 saniye boyunca sonuçlar sakla
 🔄 Otomatik yenilenme: TTL dolduğunda bir sonraki istekte yeni veri çek
 👥 Çoklu kullanıcı güvenli:	Cache anahtarı (user_id, endpoint) kombinasyonu.
@@ -12,12 +13,35 @@ USDT pairs ile sınırla
 
 * tutarlı olanları bakım kolaylığı için class blokları halinde
 
+- çoklu kullanıcıya uygun p_handler.py dosyasını oluştur.
+- p_handler.py  için handler_loader.py ile tam uyumlu, 
+- binance_a.py deki orjinal adlandırmayı kullan, 
+- binance api standartlarına uygun olarak p_handler.py handler geliştir
+handler için
 
-Komutlar:
+sayfa başında config oluştur.
+coin belirtilmeden taranacak coin listesi
+SCAN_SYMBOLS = [
+    "BTCUSDT", "ETHUSDT", "BNBUSDT", "SOLUSDT", "PEPEUSDT",
+    "ARPAUSDT", "FETUSDT", "SUSDT", "ALICEUSDT", "TRXUSDT"
+]
+
+coin belirtilmeden taranacak coin sayısı
+SCAN_DEFAULT = 20
+
+handler görevi: aşağıdaki komutlara göre sonuç üretmesi
 - /p [symbols...] → Seçilen coinlerin veya config SCAN_SYMBOLS listesinin fiyatlarını gösterir
+(/p btc , /p BNB btc fet ...)
+
 - /pg [limit]     → En çok yükselen coinleri listeler
+(/pg → default değer kadar tara sonuç üret. /pg 30 → En çok yükselen 30 coin)
+
 - /pl [limit]     → En çok düşen coinleri listeler
-- /test_api       → Binance API bağlantı testi yapar
+(/pl → default değer kadar tara sonuç üret. /pl 25 → En çok yükselen 25 coin)
+
+/Pv → hacimli ilk n coin.
+(/pv → default değer kadar tara sonuç üret. /pv 22 → En çok hacimli 22 coin)
+
 Rapor formatı (coin adı, değişim %, hacim, fiyat )
 örnek:
 📈 En Çok Yükselen 22 Coin
@@ -27,6 +51,7 @@ Rapor formatı (coin adı, değişim %, hacim, fiyat )
 
 
 
+🟧
 🟧🟧🟧🟧🟧🟧🟧🟧🟧🟧🟧
 handlers/p_handler.py
 Binance datasında küçük/büyük fark olsa da eşleşir.
