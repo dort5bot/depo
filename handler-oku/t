@@ -1,0 +1,106 @@
+revize---
+*****
+📊 Market Scan (4h, mode=config)
+<SYMBOL>: α={score}| <regime_label> (<regime_score>) <kalman_arrow> corr=<correlation>
+
+örnek
+📊 Market Scan (4h, mode=config)
+BTC: α=0.13 range(0.03) ↓ corr=1.0
+ARPA: α=0.12  range (0.31) ↑ corr=0.27
+
+
+
+
+
+
+Kodunuz bir Telegram bot komutu (`/t`) için teknik analiz (TA) işlevi görüyor ve iki temel rapor türü üretiyor. Bu raporlar, kripto para piyasası taraması ve belirli bir coin analizine dair verileri içeriyor.
+
+Aşağıda bu **rapor formatlarını** iki başlık altında detaylandırıyorum:
+
+---
+
+## 📌 1. **Market Scan Rapor Formatı** (`/t`, `/t all`, `/t 10` gibi)
+
+Bu mod, ya config’teki sembolleri tarar, ya en yüksek hacimli coin'leri (`topN`), ya da tüm USDT paritelerini.
+
+### 📝 Format:
+
+```
+📊 Market Scan (4h, mode={mode})
+<SYMBOL>: α={score} [<SIGNAL>] | Rejim={regime_label}
+```
+
+### 🔸 Örnek:
+
+```
+📊 Market Scan (4h, mode=top10)
+BTCUSDT: α=0.64 [LONG] | Rejim=trend
+ETHUSDT: α=-0.48 [FLAT] | Rejim=range
+XRPUSDT: α=-0.92 [SHORT] | Rejim=crash
+```
+
+### 🧩 Açıklamalar:
+
+* `α`: Alpha skoru, teknik analiz sonucu çıkan sinyalin kuvveti.
+* `[LONG | SHORT | FLAT]`: Pozisyon önerisi (al/sat/bekle).
+* `Rejim`: Piyasa durumu ("trend", "range", "crash").
+
+---
+
+## 📌 2. **Tek Coin Analiz Raporu** (`/t BTC`, `/t ETH 8` gibi)
+
+Belirli bir coin için detaylı analiz sonucu verir. BTC ile kıyaslamalı `lead-lag`, `entropy`, `kalman trendi` gibi gelişmiş veriler içerir.
+
+### 📝 Format:
+
+```
+🔍 <COIN> (<hours>h)
+α_skor: <score> → <SIGNAL>
+Rejim: <regime_label> (<regime_score>)
+Entropy: <entropy_score>
+Kalman eğilim: <kalman_arrow>
+Lead–Lag (BTC): <lag> bar | corr=<correlation>
+```
+
+### 🔸 Örnek:
+
+```
+🔍 SOLUSDT (6h)
+α_skor: 0.87 → LONG
+Rejim: trend (0.72)
+Entropy: 0.41
+Kalman eğilim: ↑
+Lead–Lag (BTC): 3 bar | corr=0.78
+```
+
+### 🧩 Açıklamalar:
+
+* `α_skor`: Teknik analiz sinyal gücü.
+* `Rejim`: Trend tanımlayıcı skor ve etiketi.
+* `Entropy`: Belirsizlik ölçüsü.
+* `Kalman eğilim`: Fiyat eğilimi (↑, ↓, →).
+* `Lead–Lag`: BTC'ye göre gecikme (kaç bar), korelasyon değeri.
+
+---
+
+## 🎯 Hangi Komut Ne Yapar?
+
+| Komut      | Açıklama                               |
+| ---------- | -------------------------------------- |
+| `/t`       | Config içindeki coin'leri tarar        |
+| `/t all`   | Tüm USDT çiftlerini tarar              |
+| `/t 10`    | Hacme göre ilk 10 coini tarar          |
+| `/t BTC`   | Sadece BTC analizi (varsayılan 4 saat) |
+| `/t ETH 8` | ETH analizi, son 8 saatlik veri ile    |
+
+---
+
+## ✅ Geliştirme İçin Öneri:
+
+Eğer bu raporları daha okunabilir hale getirmek istersen:
+
+* Markdown formatı kullanarak kalın, italik, emoji vurguları artırılabilir.
+* `tabulate` ya da `pandas.DataFrame.to_string()` gibi yöntemlerle tablo haline getirilebilir.
+* Çok uzun mesajlar için Telegram "media group" veya "file upload" da düşünülebilir.
+
+İstersen bu raporları `.txt`, `.csv` veya görsel tablo olarak export etmen için kodu güncelleyebilirim.
