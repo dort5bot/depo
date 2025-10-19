@@ -1,3 +1,14 @@
+/t : default
+/t<n> : hacimli n ilk n coin (örn: /t20 : hacimli ilk 20 coin)
+/t <sembol> : coin ister, analiz döndürür
+/tsc : default sayıda En iyi alım fırsatlarını listeler
+/tsc<n> : n sayıda En iyi alım fırsatlarını listeler
+/tm  : Genel piyasa sağlığını ölçer (MMI, ADI, SSP)
+/tp  :  En yüksek alım potansiyeline sahip coinleri listeler
+/tf  : 	Coin’lere giren ve çıkan sermaye yönünü gösterir
+/ta:  Fırsat ve anomali tespiti yapar
+
+
 revize---
 *****
 📊 Market Scan (4h, mode=config)
