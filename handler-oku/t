@@ -1,3 +1,18 @@
+--SON HALİ---
+| Komut         | Fonksiyon                 | Açıklama                        |
+| ------------- | ------------------------- | ------------------------------- |
+| `/t`          | Genel görünüm (10 coin)   | Multi-coin raporu               |
+| `/t20`        | İlk 20 coin görünümü      | Market sentiment + skor listesi |
+| `/t BTCUSDT`  | Tek coin analizi          | Tüm bileşik skorlar             |
+| `/tm`         | Market Health             | MMI / ADI / SSP                 |
+| `/tt`         | En iyi alım fırsatları    | BuyScore sıralı liste           |
+| `/tf`         | Global capital flow       | Risk-on / off akış              |
+| `/tf BTCUSDT` | Coin bazlı para akışı     | Net giriş/çıkış skoru           |
+| `/ta`         | Fırsat / Anomali haritası | Threshold üstü sinyaller        |
+
+---
+
+
 /t : default
 /t<n> : hacimli n ilk n coin (örn: /t20 : hacimli ilk 20 coin)
 /t <sembol> : coin ister, analiz döndürür
