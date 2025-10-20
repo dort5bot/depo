@@ -1,27 +1,33 @@
 --SON HALİ---
-| Komut         | Fonksiyon                 | Açıklama                        |
-| ------------- | ------------------------- | ------------------------------- |
-| `/t`          | Genel görünüm (10 coin)   | Multi-coin raporu               |
-| `/t20`        | İlk 20 coin görünümü      | Market sentiment + skor listesi |
-| `/t BTCUSDT`  | Tek coin analizi          | Tüm bileşik skorlar             |
-| `/tm`         | Market Health             | MMI / ADI / SSP                 |
-| `/tt`         | En iyi alım fırsatları    | BuyScore sıralı liste           |
-| `/tf`         | Global capital flow       | Risk-on / off akış              |
-| `/tf BTCUSDT` | Coin bazlı para akışı     | Net giriş/çıkış skoru           |
-| `/ta`         | Fırsat / Anomali haritası | Threshold üstü sinyaller        |
+Komut	Parametre	Anlam / Amaç	Açıklama
+/t	(boş)	Genel görünüm (default)	default coin’in özet analizi
+/t <n>	örn: /t 20	Hacimli ilk n coin	Hacimli ilk n coin’in piyasa genel görünümü
+/t <sembol>	örn: /t bnb	Tek coin analizi	Belirtilen coin’in detaylı kompozit analizi
+/tt	(boş)	Top Scan (default sayıda)	Varsayılan sayıda  en iyi alım fırsatlarını gösterir
+/tt <n>	örn: /tt 10	Top Scan n adet	n tane  en iyi alım fırsatlarını gösterir
+/tv
+/tm	(boş)	Market Health	Genel piyasa sağlığı (MMI, ADI, SSP)
+/tp	(boş)	Top Performers	default sayıda En yüksek alım potansiyeline sahip coinler
+/tp <n>	/tp 20	Top Performers	20 tane En yüksek alım potansiyeline sahip coinler
+/tf	(boş)	Capital Flow	Coin’lere giren/çıkan sermaye yönü (inflow/outflow)
+/tf <sembol>	örn: /tf btc	Capital Flow	belirtilen Coin’lere giren/çıkan sermaye yönü (inflow/outflow)
+/ta	(boş)	Anomaly / Alert Map	Piyasadaki fırsat ve anomalileri gösterir
 
+
++
+🎯 **KULLANIM SENARYOLARI:
+/tv Kullanacağın Zaman:
+"Piyasa genel olarak nasıl?"
+"Hangi coin'ler şu anda popüler?"
+"Market sentiment nedir?"
+"Farklı coin'leri karşılaştırmak istiyorum"
+
+/tt Kullanacağın Zaman:
+"Hemen alım yapmak istiyorum, en iyi fırsatlar neler?"
+"Sadece alım sinyali veren coin'leri görmek istiyorum"
+"Portföyüme eklemek için coin arıyorum"
 ---
 
-
-/t : default
-/t<n> : hacimli n ilk n coin (örn: /t20 : hacimli ilk 20 coin)
-/t <sembol> : coin ister, analiz döndürür
-/tsc : default sayıda En iyi alım fırsatlarını listeler
-/tsc<n> : n sayıda En iyi alım fırsatlarını listeler
-/tm  : Genel piyasa sağlığını ölçer (MMI, ADI, SSP)
-/tp  :  En yüksek alım potansiyeline sahip coinleri listeler
-/tf  : 	Coin’lere giren ve çıkan sermaye yönünü gösterir
-/ta:  Fırsat ve anomali tespiti yapar
 
 
 revize---
