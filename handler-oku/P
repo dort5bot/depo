@@ -5,10 +5,28 @@ Akıllı fiyat formatlama
 USDT pairs ile sınırla
 Binance datasında küçük/büyük fark olsa da eşleşir.
 (/p bnb, /p BNB sonuç üretsin)
+
 🕒 TTL Cache: Her kullanıcı + endpoint için 60 saniye boyunca sonuçlar sakla
 🔄 Otomatik yenilenme: TTL dolduğunda bir sonraki istekte yeni veri çek
 👥 Çoklu kullanıcı güvenli:	Cache anahtarı (user_id, endpoint) kombinasyonu.
 🧹 Otomatik temizlik:	Eski cache kayıtları TTL dolunca sil
+⚡ Hızlı
+🧠 Optimum performans için optimize edilmiş
+🕒 Düşük gecikmeli (low-latency)
+👥 Çok kullanıcılı destekli
+🔁 Asenkron çalışan (asyncio + semaphore kontrollü)
+💡 Yedekli veri sistemi (Aggregator başarısız olursa HTTP fallback)
+🚀 Kripto fiyat, değişim ve hacim verilerini çoklu komutla sunar
+
+| Optimizasyon                             | Açıklama                                                                      |
+| ---------------------------------------- | ----------------------------------------------------------------------------- |
+| **`orjson` JSON parser**                 | `json` yerine `orjson` ile çok daha hızlı parsing yapılır.                    |
+| **Global Cache**                         | Aynı endpoint'e 60 saniye boyunca tekrar istek yapılmaz (hafifletilmiş load). |
+| **`heapq` ile sıralama**                 | `sorted()` yerine `nlargest` / `nsmallest` ile daha hızlı top-N hesaplama.    |
+| **Regex Precompile**                     | `normalize_symbol()` içinde her çağrıda yeniden derlenmeyen regex.            |
+| **Async Semaphore**                      | Aynı anda 5 istekten fazla yapılmaz, rate limit dostu.                        |
+| **String formatları property’e taşındı** | Daha okunabilir, modüler ve hızlı çıktı üretimi sağlanır.                     |
+
 
 
 * tutarlı olanları bakım kolaylığı için class blokları halinde
@@ -19,15 +37,16 @@ Binance datasında küçük/büyük fark olsa da eşleşir.
 - binance api standartlarına uygun olarak p_handler.py handler geliştir
 handler için
 
-sayfa başında config oluştur.
-coin belirtilmeden taranacak coin listesi
-SCAN_SYMBOLS = [
-    "BTCUSDT", "ETHUSDT", "BNBUSDT", "SOLUSDT", "PEPEUSDT",
-    "ARPAUSDT", "FETUSDT", "SUSDT", "ALICEUSDT", "TRXUSDT"
-]
+>> coin belirtilmeden taranacak coin sayısı configden alınacak veriler
+from config import ScanConfig
+scan_config = ScanConfig()
 
-coin belirtilmeden taranacak coin sayısı
-SCAN_DEFAULT = 20
+SCAN_SYMBOLS = scan_config.SCAN_SYMBOLS  # Öntanımlı takip edilecek coin sembolleri
+SCAN_DEFAULT = scan_config.SCAN_DEFAULT_COUNT  # Komutlarda varsayılan gösterim sayısı
+SCAN_MAX = scan_config.SCAN_MAX_COUNT  # Komutlarda izin verilen maksimum sayılar
+CACHE_TTL = 60  # cache süresi
+
+
 
 handler görevi: aşağıdaki komutlara göre sonuç üretmesi
 - /p [symbols...] → Seçilen coinlerin veya config SCAN_SYMBOLS listesinin fiyatlarını gösterir
