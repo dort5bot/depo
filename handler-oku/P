@@ -1,15 +1,18 @@
 🟧
 Binance API ile çoklu kullanıcı desteği sağlayan handler
+Formatlama: Akıllı fiyat ve volume formatlama
 Otomatik volume formatlama (M/K)
 Akıllı fiyat formatlama
 USDT pairs ile sınırla
 Binance datasında küçük/büyük fark olsa da eşleşir.
 (/p bnb, /p BNB sonuç üretsin)
 
+* Multi-user Cache: Her kullanıcı için ayrı cache, TTL otomatik temizlik
 🕒 TTL Cache: Her kullanıcı + endpoint için 60 saniye boyunca sonuçlar sakla
 🔄 Otomatik yenilenme: TTL dolduğunda bir sonraki istekte yeni veri çek
 👥 Çoklu kullanıcı güvenli:	Cache anahtarı (user_id, endpoint) kombinasyonu.
 🧹 Otomatik temizlik:	Eski cache kayıtları TTL dolunca sil
+
 ⚡ Hızlı
 🧠 Optimum performans için optimize edilmiş
 🕒 Düşük gecikmeli (low-latency)
@@ -18,14 +21,22 @@ Binance datasında küçük/büyük fark olsa da eşleşir.
 💡 Yedekli veri sistemi (Aggregator başarısız olursa HTTP fallback)
 🚀 Kripto fiyat, değişim ve hacim verilerini çoklu komutla sunar
 
+Hata Yönetimi: Kapsamlı logging ve error handling
+Akıllı Fallback: Aggregator → HTTP fallback
+
+orjson ile ultra hızlı JSON parsing
+Precompiled regex
+heapq ile hızlı sıralama
+Async semaphore ile rate limit koruması
+
+
+
 | Optimizasyon                             | Açıklama                                                                      |
 | ---------------------------------------- | ----------------------------------------------------------------------------- |
-| **`orjson` JSON parser**                 | `json` yerine `orjson` ile çok daha hızlı parsing yapılır.                    |
-| **Global Cache**                         | Aynı endpoint'e 60 saniye boyunca tekrar istek yapılmaz (hafifletilmiş load). |
-| **`heapq` ile sıralama**                 | `sorted()` yerine `nlargest` / `nsmallest` ile daha hızlı top-N hesaplama.    |
 | **Regex Precompile**                     | `normalize_symbol()` içinde her çağrıda yeniden derlenmeyen regex.            |
 | **Async Semaphore**                      | Aynı anda 5 istekten fazla yapılmaz, rate limit dostu.                        |
 | **String formatları property’e taşındı** | Daha okunabilir, modüler ve hızlı çıktı üretimi sağlanır.                     |
+
 
 
 
