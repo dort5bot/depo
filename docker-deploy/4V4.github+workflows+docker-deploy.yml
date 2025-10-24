@@ -1,4 +1,5 @@
 name: 🐳 Docker Build & Deploy (Multi-Container Staging→Production)
+# v4
 #.github/workflows/docker-deploy.yml
 #1. Multi-container deploy: Tek VPS üzerinde staging/prod için birden fazla container (primary, secondary) çalışabilir.
 #2. Dinamik port ve isimlendirme: Port ve container adı otomatik atanır → çakışma riski yok.
