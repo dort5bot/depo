@@ -1,5 +1,5 @@
-#final-3
-#Dockerfile
+# v3
+# Dockerfile
 #	Katman temizliği için detaylı temizlik
 #	Gereksiz dosyaların image'e girmesini engelle
 #	Daha esnek konteyner davranışı
