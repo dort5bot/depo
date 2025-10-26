@@ -1,0 +1,395 @@
+# ============================================================
+# analysis_metric_schema.yaml
+# Mevcut kod yapısına %100 uyumlu
+# priority alanı: "high" → "*", "medium" → "**", "low" → "***"
+# ============================================================
+
+meta:
+  source: Binance
+  version: "2025.1"
+  last_updated: "2025-10-10"
+  maintainer: "ysf-bot-framework"
+  schema_version: 1.3
+  description: "Binance API endpoints for trading, balance, risk, and portfolio management - UPDATED FOR CODE COMPATIBILITY"
+
+modules:
+
+  - name: "trend_moment"
+    file: "trend_moment.py"
+    config: "c_trend.py"
+    command: "/api/analysis/trend"
+    command_aliases: ["/trend"]
+    api_type: "public"
+    endpoints:
+      - "/api/v3/klines"
+      - "/api/v3/ticker/24hr"
+      - "/fapi/v1/continuousKlines"
+    methods: ["GET"]
+    job_type: "batch"
+    parallel_mode: "async"
+    classical_metrics:
+      - EMA
+      - RSI
+      - MACD
+      - Bollinger_Bands
+      - ATR
+      - ADX
+    professional_metrics:
+      - { name: "Kalman_Filter_Trend", priority: "*" }
+      - { name: "Z_Score_Normalization", priority: "*" }
+      - { name: "Wavelet_Transform", priority: "**" }
+      - { name: "Hilbert_Transform_Slope", priority: "**" }
+      - { name: "Fractal_Dimension_Index_FDI", priority: "***" }
+    composite_metrics:
+      - "0.15*EMA_Trend + 0.12*RSI_Momentum + 0.13*MACD_Trend + 0.10*Bollinger_Trend + 0.08*ATR_Volatility + 0.10*ADX_Strength + 0.08*Stoch_RSI_Momentum + 0.07*Momentum_Oscillator + 0.05*Kalman_Trend + 0.04*Z_Score + 0.03*Wavelet_Trend + 0.03*Hilbert_Slope + 0.02*FDI_Complexity"
+    objective: "Trend direction and momentum strength analysis"
+    output_type: "score"
+    description: "Comprehensive trend analysis using classical and advanced technical indicators"
+    lifecycle: "development"
+    dependencies: []
+    version: "1.1.0"
+    maintainer: "deepsek"
+
+  - name: "volat_regime"
+    file: "volat_regime.py"
+    config: "c_volat.py"
+    command: "/api/analysis/volatility"
+    command_aliases: ["/volatility"]
+    api_type: "public"
+    endpoints:
+      - "/api/v3/klines"
+      - "/fapi/v1/markPrice"
+      - "/fapi/v1/fundingRate"
+      - "/fapi/v1/premiumIndex"
+    methods: ["GET"]
+    job_type: "batch"
+    parallel_mode: "batch"
+    classical_metrics:
+      - Historical_Volatility
+      - ATR
+      - Bollinger_Width
+      - Variance_Ratio_Test
+      - Range_Expansion_Index
+    professional_metrics:
+      - { name: "GARCH_1_1", priority: "*" }
+      - { name: "Entropy_Index", priority: "*" }
+      - { name: "Hurst_Exponent", priority: "**" }
+    composite_metrics:
+      - "0.15*Historical_Volatility + 0.10*ATR + 0.10*Bollinger_Width + 0.20*Variance_Ratio + 0.15*Hurst + 0.05*Entropy + 0.15*GARCH_Implied_Realized_Diff + 0.05*Premium + 0.05*REI"
+    objective: "Volatility regime detection and analysis"
+    output_type: "regime_score"
+    description: "Comprehensive volatility analysis using GARCH, Hurst, entropy and other advanced metrics"
+    lifecycle: "development"
+    dependencies: []
+    version: "1.1.0"
+    maintainer: "deepsek"
+
+  - name: "derivatives_sentiment"
+    file: "deriv_sentim.py"
+    config: "c_deriv.py"
+    command: "/api/analysis/sentiment"
+    command_aliases: ["/sentiment"]
+    api_type: "public"
+    endpoints:
+      - "/fapi/v1/fundingRate"
+      - "/fapi/v1/openInterestHist"
+      - "/fapi/v1/longShortRatio"
+      - "/fapi/v1/liquidationOrders"
+      - "/fapi/v1/takerlongshortRatio"
+    methods: ["GET"]
+    job_type: "async"
+    parallel_mode: "async"
+    classical_metrics:
+      - Funding_Rate
+      - Open_Interest
+      - Long_Short_Ratio
+      - OI_Change_Rate
+      - Funding_Rate_Skew
+      - Volume_Imbalance
+    professional_metrics:
+      - { name: "Liquidation_Heat", priority: "*" }
+      - { name: "OI_Delta_Divergence", priority: "**" }
+      - { name: "Volatility_Skew", priority: "**" }
+    composite_metrics:
+      - "0.15*Funding_Rate + 0.12*Open_Interest + 0.13*Long_Short_Ratio + 0.12*OI_Change_Rate + 0.10*Funding_Skew + 0.10*Volume_Imbalance + 0.15*Liquidation_Heat + 0.08*OI_Delta_Divergence + 0.05*Volatility_Skew"
+    objective: "Trader positioning & sentiment eğilimi"
+    output_type: "sentiment_score"
+    description: "Futures market positioning and sentiment analysis"
+    lifecycle: "development"
+    dependencies: []
+    version: "1.0.0"
+    maintainer: "deepsek"
+
+  - name: "order_micros"
+    file: "order_micros.py"
+    config: "c_order.py"
+    command: "/api/analysis/orderflow"
+    command_aliases: ["/orderflow"]
+    api_type: "public"
+    endpoints:
+      - "/fapi/v1/depth"
+      - "/fapi/v1/trades"
+      - "/fapi/v1/ticker/bookTicker"
+    methods: ["GET"]
+    job_type: "batch"
+    parallel_mode: "stream"
+    classical_metrics:
+      - Orderbook_Imbalance
+      - Spread
+      - Market_Buy_Sell_Pressure
+      - Trade_Aggression_Ratio
+      - Slippage
+      - Depth_Elasticity
+    professional_metrics:
+      - { name: "CVD", priority: "*" }
+      - { name: "OFI", priority: "**" }
+      - { name: "Taker_Dominance_Ratio", priority: "**" }
+      - { name: "Liquidity_Density", priority: "***" }
+    composite_metrics:
+      - "0.22*Orderbook_Imbalance + 0.15*Spread + 0.15*Market_Pressure + 0.08*Trade_Aggression + 0.08*Slippage + 0.10*Depth_Elasticity + 0.07*CVD + 0.06*OFI + 0.05*Taker_Dominance + 0.04*Liquidity_Density"
+    objective: "Order Flow & Microstructure analysis"
+    output_type: "microstructure_score"
+    description: "Real-time order flow and microstructure analysis"
+    lifecycle: "development"
+    dependencies: []
+    version: "1.0.0"
+    maintainer: "deepsek"
+
+  - name: "micro_alpha"
+    file: "microalpha.py"
+    config: "c_micro.py"
+    command: "/api/analysis/microalpha"
+    command_aliases: ["/microalpha"]
+    api_type: "public"
+    endpoints:
+      - "/fapi/v1/depth"
+      - "/fapi/v1/trades"
+      - "/fapi/v1/ticker/price"
+      - "/fapi/v1/ticker/bookTicker"
+      - "/fapi/v1/aggTrades"
+    methods: ["GET"]
+    job_type: "stream"
+    parallel_mode: "async"
+    classical_metrics:
+      - CVD
+      - OFI
+      - Microprice_Deviation
+      - Market_Impact
+      - Latency_Flow_Ratio
+      - HF_ZScore
+    professional_metrics:
+      - { name: "Kalman_Filter_Market_Impact", priority: "**" }
+      - { name: "High_Frequency_Anomaly_Detection", priority: "***" }
+    composite_metrics:
+      - "0.25*CVD + 0.25*OFI + 0.20*Microprice_Deviation + 0.15*Market_Impact + 0.10*Latency_Flow_Ratio + 0.05*HF_ZScore"
+    objective: "Real-time microstructure alpha factor generator"
+    output_type: "micro_alpha_score"
+    description: "Real-time tick-level microstructure analysis for high-frequency alpha generation"
+    lifecycle: "development"
+    dependencies: []
+    version: "1.0.0"
+    maintainer: "deepsek"
+    
+  - name: "correlation_lead_lag"
+    file: "corr_lead.py"
+    config: "c_corr.py"
+    command: "/corr"
+    command_aliases: ["/c"]
+    api_type: "spot_futures_public"
+    endpoints:
+    - "/api/v3/klines"
+    - "/fapi/v1/klines"
+    - "/api/v3/ticker/price"
+    methods: ["GET"]
+    job_type: "CPU + I/O Mixed"
+    parallel_mode: "batch"
+    classical_metrics:
+    - Pearson_Correlation
+    - Beta_Coefficient
+    - Rolling_Covariance
+    - Partial_Correlation
+    - Lead_Lag_Delta
+    professional_metrics:
+    - { name: "Granger_Causality_Test", priority: "*" }
+    - { name: "Dynamic_Time_Warping_DTW", priority: "*" }
+    - { name: "Vector_AutoReg_VAR", priority: "**" }
+    # Canonical_Correlation ÇIKARILDI - mevcut kodda yok
+    composite_metrics:
+    - "0.15*Pearson + 0.15*Beta + 0.10*RollingCov + 0.10*PartialCorr + 0.20*LeadLag + 0.15*Granger + 0.10*DTW + 0.05*VAR"
+    objective: "Coin'ler arası liderlik & yön takibi"
+    output_type: "Correlation Score (0-1)"
+    description: "Farklı coinler arasındaki yön bağımlılıklarını ve liderlik etkilerini analiz eder."
+    lifecycle: "development"
+    dependencies: 
+    - "numpy"
+    - "pandas"
+    - "scipy"
+    - "statsmodels"
+    - "fastdtw"
+    version: "2025.1"
+    maintainer: "ysf"
+
+
+  - name: "on_chain_macro"
+    file: "onchain.py"
+    config: "c_onchain.py"
+    command: "/macro"
+    command_aliases: ["/ma", "/onchain"]
+    api_type: "external_onchain_hybrid"
+    endpoints:
+    - "/api/v3/klines"
+    - "Glassnode"
+    - "CryptoQuant"
+    - "Farside ETF"
+    methods: ["GET"]
+    job_type: "I/O-bound"
+    parallel_mode: "async"
+    classical_metrics:
+    - etf_net_flow
+    - stablecoin_flow
+    - exchange_netflow
+    - net_realized_pl
+    - realized_cap
+    - nupl
+    professional_metrics:
+    - { name: "exchange_whale_ratio", priority: "*" }
+    - { name: "mvrv_zscore", priority: "**" }
+    - { name: "sopr", priority: "***" }
+    composite_metrics:
+    - "0.15*etf_net_flow + 0.15*stablecoin_flow + 0.20*exchange_netflow + 0.15*net_realized_pl + 0.10*exchange_whale_ratio + 0.10*mvrv_zscore + 0.05*nupl + 0.10*sopr"
+    objective: "Zincir üstü likidite & makro eğilim analizi"
+    output_type: "Macro Score (0-1) with bullish/bearish/neutral signal"
+    description: |
+      Çoklu zincir üstü veri kaynaklarından (ETF akışları, borsa netflow'ları,
+      stablecoin hareketleri, on-chain metriker) makro likidite skoru üretir.
+      Circuit breaker ile external API dayanıklılığı sağlar.
+
+
+    lifecycle: "production"
+    dependencies:
+    - "pandas"
+    - "numpy" 
+    - "pydantic"
+    - "asyncio"
+    version: "1.0.0"
+    maintainer: "ysf"
+    data_sources:
+    glassnode:
+      - "stablecoin_netflow"
+      - "realized_cap" 
+      - "mvrv_zscore"
+      - "sopr"
+    cryptoquant:
+      - "nupl"
+      - "net_realized_profit_loss"
+      - "exchange_whale_ratio"
+    farside:
+      - "etf_flows"
+    thresholds:
+    bullish: 0.65
+    bearish: 0.35
+    normalization:
+    method: "zscore_clip"
+    clip_z: 3.0
+    circuit_breaker:
+    failure_threshold: 3
+    recovery_time: 60
+
+  - name: "risk_expos"
+    file: "risk_expos.py"
+    config: "c_risk.py"
+    command: "/api/analysis/risk"
+    command_aliases: ["/risk"]
+    api_type: "private"
+    endpoints:
+      - "/fapi/v1/positionRisk"
+      - "/fapi/v2/account"
+      - "/fapi/v2/balance"
+      - "/api/v3/klines"
+    methods: ["GET"]
+    job_type: "batch"
+    parallel_mode: "batch"
+    classical_metrics:
+      - VaR
+      - CVaR
+      - Leverage
+      - Volatility_Targeting
+      - Max_Drawdown
+      - ATR_Stop
+    professional_metrics:
+      - { name: "Historical_VaR", priority: "*" }
+      - { name: "Conditional_VaR", priority: "*" }
+      - { name: "Dynamic_Sharpe_Sortino", priority: "**" }
+    composite_metrics:
+      - "0.30*VaR + 0.25*CVaR + 0.15*Leverage + 0.10*Volatility_Targeting + 0.10*Max_Drawdown + 0.10*ATR_Stop"
+    objective: "Risk exposure analysis and management"
+    output_type: "risk_score"
+    description: "Comprehensive risk analysis including VaR, CVaR, leverage, drawdown and volatility targeting"
+    lifecycle: "development"
+    dependencies: []
+    version: "1.1.0"
+    maintainer: "deepsek"
+
+  - name: "portfolio_allocation"
+    file: "port_alloc.py"
+    config: "c_portalloc.py"
+    command: "/api/analysis/portfolio"
+    command_aliases: ["/portfolio"]
+    api_type: "public"
+    endpoints:
+      - "/api/v3/klines"
+      - "/api/v3/ticker/24hr"
+    methods: ["GET"]
+    job_type: "batch"
+    parallel_mode: "batch"
+    classical_metrics:
+      - Sharpe_Ratio
+      - Sortino_Ratio
+      - VaR
+      - Drawdown
+      - Volatility
+    professional_metrics:
+      - { name: "Black_Litterman_Model", priority: "*" }
+      - { name: "Hierarchical_Risk_Parity", priority: "**" }
+      - { name: "Risk_Parity", priority: "***" }
+    composite_metrics:
+      - "0.30*Sharpe + 0.25*Sortino + 0.20*VaR + 0.15*Drawdown + 0.10*Volatility"
+    objective: "Portfolio optimization and asset allocation"
+    output_type: "allocation_weights"
+    description: "Black-Litterman, HRP, Risk Parity portfolio optimization with comprehensive metrics"
+    lifecycle: "development"
+    dependencies: []
+    version: "1.1.0"
+    maintainer: "deepsek"
+
+  - name: "regime_anomal"
+    file: "regime_anomal.py"
+    command: "/api/analysis/regime"
+    command_aliases: ["/regime"]
+    api_type: "public"
+    endpoints:
+      - "/api/v3/klines"
+      - "/fapi/v1/markPrice"
+      - "/fapi/v1/openInterestHist"
+      - "/fapi/v1/fundingRate"
+    methods: ["GET"]
+    job_type: "batch"
+    parallel_mode: "async"
+    classical_metrics:
+      - CUSUM
+      - Isolation_Forest
+      - Z_Score
+      - Cumulative_Return_Deviation
+      - Spectral_Residual
+    professional_metrics:
+      - { name: "Change_Point_Detection", priority: "*" }
+      - { name: "Anomaly_Detection", priority: "**" }
+    composite_metrics:
+      - "0.40*CUSUM + 0.30*Isolation_Forest + 0.20*Z_Score + 0.10*Cumulative_Return_Deviation"
+    objective: "Regime change detection and anomaly analysis"
+    output_type: "anomaly_score"
+    description: "Detect sudden regime changes and anomalies using spot + futures data"
+    lifecycle: "development"
+    dependencies: []
+    version: "2025.1"
+    maintainer: "deepsek"
