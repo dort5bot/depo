@@ -129,6 +129,56 @@ class AnalysisUtilities:
         consistency = 1.0 - min(variance, 1.0)
         return consistency * 0.8 + 0.2
 
+    # veri model takviye
+    @staticmethod
+    def dataframe_to_scores(
+        df: Any, 
+        score_columns: List[str],
+        dataframe_type: str = 'auto'
+    ) -> Dict[str, float]:
+        """
+        Farklı dataframe türlerinden skor sözlüğüne dönüştürme
+        
+        Args:
+            df: pandas/polars DataFrame veya numpy array
+            score_columns: Kullanılacak kolon isimleri
+            dataframe_type: 'pandas', 'polars', 'numpy', 'auto'
+        """
+        scores = {}
+        
+        # Auto-detect dataframe type
+        if dataframe_type == 'auto':
+            if hasattr(df, 'iloc'):  # pandas
+                dataframe_type = 'pandas'
+            elif hasattr(df, 'select'):  # polars  
+                dataframe_type = 'polars'
+            elif isinstance(df, np.ndarray):
+                dataframe_type = 'numpy'
+            else:
+                raise ValueError("Unsupported dataframe type")
+        
+        try:
+            if dataframe_type == 'pandas':
+                for col in score_columns:
+                    scores[col] = float(df[col].iloc[-1])  # Son değeri al
+            
+            elif dataframe_type == 'polars':
+                for col in score_columns:
+                    scores[col] = float(df[col][-1])  # Son değeri al
+            
+            elif dataframe_type == 'numpy':
+                if len(score_columns) != df.shape[1]:
+                    raise ValueError("Column count mismatch")
+                for i, col in enumerate(score_columns):
+                    scores[col] = float(df[-1, i])  # Son satır
+            
+            return scores
+            
+        except (IndexError, KeyError) as e:
+            logger.warning(f"Dataframe conversion error: {e}")
+            return {col: 0.5 for col in score_columns}  # Fallback
+
+
 
 # ✅ MEVCUT AnalysisHelpers Class'ı (Güncellenmiş)
 class AnalysisHelpers:
@@ -206,4 +256,5 @@ class AnalysisHelpers:
 
 # Kullanım kolaylığı için instance'lar
 analysis_helpers = AnalysisHelpers()
+
 utility_functions = AnalysisUtilities()  # ✅ Yeni utility instance'ı
