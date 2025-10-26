@@ -1,5 +1,8 @@
 # analysis/analysis_core.py
-
+"""
+Version: 1.0.0
+Analiz modülleri icin agregator
+"""
 import os
 import asyncio
 import logging
