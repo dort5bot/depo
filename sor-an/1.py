@@ -1,7 +1,52 @@
+1 trend_moment.py  + c_trend.py  eklenen dosya (tam kod ve config):  →  Polars  
+veri modelinde, tam async, multi user yapı da mı, değilse gerekli kodları ver, isimlendirmeleri koru örnek: compute_metrics > compute_metrics olmalı
+analysis_helpers.py ile tam uyumlu, gereken tam kodları ver"
+"
 
-eklenen dosyalar (tam kod ve config): port_alloc.py  + c_portalloc.py →  Polars  veri modelinde, tam async, multi user yapı da mı, değilse gerekli kodları ver, isimlendirmeleri koru örnek: compute_metrics > compute_metrics olmalı
+2 volat_regime.py  + c_volat.py  eklenen dosya (tam kod ve config):  →  Polars  
+veri modelinde, tam async, multi user yapı da mı, değilse gerekli kodları ver, isimlendirmeleri koru örnek: compute_metrics > compute_metrics olmalı
+analysis_helpers.py ile tam uyumlu, gereken tam kodları ver"
+"
 
-eklenen dosyalar (tam kod ve config): regime_anomal.py  + ❌ Hayır (içeride tanımla) →  Polars  veri modelinde, tam async, multi user yapı da mı, değilse gerekli kodları ver, isimlendirmeleri koru örnek: compute_metrics > compute_metrics olmalı
+3 deriv_sentim.py  + c_deriv.py  eklenen dosya (tam kod ve config):  →  Pandas  
+veri modelinde, tam async, multi user yapı da mı, değilse gerekli kodları ver, isimlendirmeleri koru örnek: compute_metrics > compute_metrics olmalı
+analysis_helpers.py ile tam uyumlu, gereken tam kodları ver"
+"
+
+4 order_micros.py  + c_order.py  eklenen dosya (tam kod ve config):  →  Numpy  
+veri modelinde, tam async, multi user yapı da mı, değilse gerekli kodları ver, isimlendirmeleri koru örnek: compute_metrics > compute_metrics olmalı
+analysis_helpers.py ile tam uyumlu, gereken tam kodları ver"
+"
+
+5 corr_lead.py  + c_corr.py  eklenen dosya (tam kod ve config):  →  Polars  
+veri modelinde, tam async, multi user yapı da mı, değilse gerekli kodları ver, isimlendirmeleri koru örnek: compute_metrics > compute_metrics olmalı
+analysis_helpers.py ile tam uyumlu, gereken tam kodları ver"
+"
+
+6 onchain.py  + c_onchain.py  eklenen dosya (tam kod ve config):  →  Pandas  
+veri modelinde, tam async, multi user yapı da mı, değilse gerekli kodları ver, isimlendirmeleri koru örnek: compute_metrics > compute_metrics olmalı
+analysis_helpers.py ile tam uyumlu, gereken tam kodları ver"
+"
+
+7 risk_expos.py  + c_risk.py  eklenen dosya (tam kod ve config):  →  Polars  
+veri modelinde, tam async, multi user yapı da mı, değilse gerekli kodları ver, isimlendirmeleri koru örnek: compute_metrics > compute_metrics olmalı
+analysis_helpers.py ile tam uyumlu, gereken tam kodları ver"
+"
+
+8 microalpha.py  + c_micro.py  eklenen dosya (tam kod ve config):  →  Numpy  
+veri modelinde, tam async, multi user yapı da mı, değilse gerekli kodları ver, isimlendirmeleri koru örnek: compute_metrics > compute_metrics olmalı
+analysis_helpers.py ile tam uyumlu, gereken tam kodları ver"
+"
+
+9 port_alloc.py  + c_portalloc.py  eklenen dosya (tam kod ve config):  →  Polars  
+veri modelinde, tam async, multi user yapı da mı, değilse gerekli kodları ver, isimlendirmeleri koru örnek: compute_metrics > compute_metrics olmalı
+analysis_helpers.py ile tam uyumlu, gereken tam kodları ver"
+"
+
+10 regime_anomal.py  + ❌ Hayır (içeride tanımla)  eklenen dosya (tam kod ve config):  →  Polars  
+veri modelinde, tam async, multi user yapı da mı, değilse gerekli kodları ver, isimlendirmeleri koru örnek: compute_metrics > compute_metrics olmalı
+analysis_helpers.py ile tam uyumlu, gereken tam kodları ver"
+
 
 
 *
