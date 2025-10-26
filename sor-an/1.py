@@ -63,7 +63,11 @@ eklenen dosyalar (tam kod ve config): port_alloc.py  + c_portalloc.py →  Polar
 4
 eklenen dosyalar (tam kod ): regime_anomal.py   →  Polars  veri modelinde, tam async, multi user yapı da mı, değilse gerekli kodları ver, isimlendirmeleri koru örnek: compute_metrics > compute_metrics olmalı
 
-
-
+> buna bağlı modüller şu veri modellri ile çalışıyor. 
+    bu dosya buna uyumlu  mu
+Polars
+Pandas
+Numpy
+asyncio.to_thread
 
           
