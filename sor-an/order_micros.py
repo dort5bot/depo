@@ -1,5 +1,7 @@
 """
 analysis/order_micros.py
+Version: 1.1.0
+
 Order Flow & Microstructure module
 File: order_micros.py
 Config file: c_order.py

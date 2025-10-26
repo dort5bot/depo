@@ -1,17 +1,18 @@
 # analysis/config/c_trend.py
 """
+analysis/config/c_trend.py
+Version: 2.0.0
 Trend & Momentum Analysis Module Configuration - Analysis Helpers Uyumlu
-Version: 1.1.0
 deepsek
 """
 
 from analysis.config.cm_base import TrendConfig, ModuleLifecycle, ParallelMode
 from analysis.config.cm_base import AnalysisModuleConfig, ModuleLifecycle, ParallelMode
 from analysis.analysis_helpers import AnalysisHelpers
+from typing import Dict, Any
 
 # ✅ ANALYSIS_HELPERS UYUMLU TREND CONFIG
-TrendConfig = AnalysisModuleConfig(
-#TrendConfig = TrendConfig(
+CONFIG = AnalysisModuleConfig(
     module_name="trend_moment",
     file="analysis/trend_moment.py",
     config="c_trend.py",
@@ -23,7 +24,7 @@ TrendConfig = AnalysisModuleConfig(
     objective="Trend direction and momentum strength analysis",
     maintainer="deepsek",
     description="Comprehensive trend analysis using classical and advanced technical indicators",
-    version="1.1.0",
+    version="2.0.0",
     lifecycle=ModuleLifecycle.DEVELOPMENT,
     enabled=True,
     
@@ -57,9 +58,14 @@ TrendConfig = AnalysisModuleConfig(
         "wavelet_level": 3,
         "hilbert_window": 10,
         "fdi_window": 10,
+        
+        # Polars optimization
+        "polars_streaming": True,
+        "polars_parallel": True,
+        "default_interval": "1h"
     },
     
-    # ✅ ANALYSIS_HELPERS UYUMLU WEIGHTS (normalized)
+    # ✅ WEIGHTS FOR COMPOSITE SCORE
     weights={
         "ema_trend": 0.15,
         "rsi_momentum": 0.12,
@@ -76,53 +82,73 @@ TrendConfig = AnalysisModuleConfig(
         "fdi_complexity": 0.02
     },
     
-    # ✅ THRESHOLDS
+    # ✅ THRESHOLDS FOR SIGNAL CLASSIFICATION
     thresholds={
         "bullish": 0.7,
         "bearish": 0.3,
         "strong_trend": 0.6,
-        "weak_trend": 0.4
+        "weak_trend": 0.4,
+        "confidence_threshold": 0.6
     },
     
-    # ✅ NORMALIZATION SETTINGS
-    normalization={
-        "method": "zscore",
-        "clip_z": 3.0,
-        "robust_quantile_range": (0.25, 0.75)
+    # ✅ ANALYSIS_HELPERS INTEGRATION
+    helpers_config={
+        "cache_ttl": 60,
+        "validation_strict": True,
+        "fallback_enabled": True,
+        "normalization_method": "tanh",
+        "output_schema": "AnalysisOutput"
+    },
+    
+    # ✅ PERFORMANCE OPTIMIZATIONS
+    performance={
+        "batch_size": 50,
+        "max_concurrent": 10,
+        "timeout_seconds": 30,
+        "retry_attempts": 3,
+        "use_thread_pool": True,
+        "thread_pool_size": 4
+    },
+    
+    # ✅ METADATA FOR MONITORING
+    metadata={
+        "category": "technical_analysis",
+        "subcategory": "trend_momentum",
+        "tags": ["trend", "momentum", "technical_indicators", "polars", "async"],
+        "data_requirements": ["ohlcv"],
+        "output_metrics": [
+            "score", "signal", "confidence", "components", "explain"
+        ],
+        "compatibility": {
+            "analysis_helpers": ">=1.0.0",
+            "polars": ">=0.20.0",
+            "async_support": True,
+            "multi_user": True
+        }
     }
 )
 
-# Parameter descriptions for documentation
-PARAM_DESCRIPTIONS = {
-    "ema_periods": "Exponential Moving Average periods for multi-timeframe trend analysis",
-    "rsi_period": "Relative Strength Index period for momentum measurement",
-    "macd_fast": "MACD fast EMA period",
-    "macd_slow": "MACD slow EMA period", 
-    "macd_signal": "MACD signal line period",
-    "bollinger_period": "Bollinger Bands moving average period",
-    "bollinger_std": "Bollinger Bands standard deviation multiplier",
-    "weights": "Component weights for final trend score calculation",
-    "thresholds": "Score thresholds for trend classification"
-}
+# ✅ CONFIG HELPER FUNCTIONS
+def get_trend_config() -> Dict[str, Any]:
+    """Get trend module configuration as dictionary"""
+    return CONFIG.dict()
 
+def get_trend_weights() -> Dict[str, float]:
+    """Get trend weights configuration"""
+    return CONFIG.weights
 
-# c_trend.py sonuna ekleyin
-def get_trend_parameters(self) -> Dict[str, Any]:
-    """Config parametrelerini dict olarak döndür"""
-    return {
-        "parameters": self.parameters,
-        "weights": self.weights, 
-        "thresholds": self.thresholds,
-        "normalization": self.normalization
-    }
+def get_trend_thresholds() -> Dict[str, float]:
+    """Get trend thresholds configuration"""
+    return CONFIG.thresholds
 
-# Config objesine metod ekle
-TrendConfig.get_parameters = get_trend_parameters
+def get_trend_parameters() -> Dict[str, Any]:
+    """Get trend parameters configuration"""
+    return CONFIG.parameters
 
+def validate_trend_config() -> bool:
+    """Validate trend configuration using AnalysisHelpers"""
+    helpers = AnalysisHelpers()
+    return helpers.validate_config_schema(CONFIG.dict())
 
-# ✅ CONFIG VALIDATION ON IMPORT
-if __name__ == "__main__":
-    if TrendConfig.validate_config():
-        print("✅ Trend config validation passed")
-    else:
-        print("❌ Trend config validation failed")
+# ✅ CONFIG INSTANCE FOR DIRECT IMPORT
+trend_config = CONFIG

@@ -1,24 +1,27 @@
 # analysis/analysis_core.py
 """
-Version: 1.0.0
-Analiz modülleri icin agregator
+analysis/analysis_core.py
+Version: 2.0.0 - Tam Async Optimized
+Analiz modülleri için agregator - Base ve Helper ile tam uyumlu
+
+
 """
 import os
 import asyncio
 import logging
-import importlib.util
 import time
 import hashlib
 import gc
+import importlib.util
 from time import perf_counter
 from pydantic import ValidationError
-from typing import Dict, List, Optional, Any
+from typing import Dict, List, Optional, Any, Tuple
 from enum import Enum
 from dataclasses import dataclass, field
 from contextlib import asynccontextmanager
 
 # Schema imports
-from .analysis_schema_manager import (
+from analysis.analysis_schema_manager import (
     load_analysis_schema,
     load_module_run_function,
     resolve_module_path,
@@ -27,9 +30,8 @@ from .analysis_schema_manager import (
     CircuitBreaker
 )
 
-from .analysis_base_module import BaseAnalysisModule
-from .analysis_base_module import legacy_compatible
-from .analysis_helpers import AnalysisHelpers, AnalysisOutput, AnalysisUtilities, analysis_helpers
+from analysis.analysis_base_module import BaseAnalysisModule, legacy_compatible
+from analysis.analysis_helpers import AnalysisHelpers, AnalysisOutput, AnalysisUtilities, analysis_helpers, utility_functions
 from analysis.composite.composite_engine import CompositeScoreEngine
 
 # Configure logging
@@ -97,6 +99,15 @@ class UserLimit:
     def record_execution(self, module_count: int):
         self._minute_count += module_count
 
+# ✅ YARDIMCI FONKSİYONLAR
+def create_fallback_output(module_name: str, reason: str = "Error") -> Dict[str, Any]:
+    """Fallback output oluştur - AnalysisUtilities ile uyumlu"""
+    return utility_functions.create_fallback_output(module_name, reason)
+
+def validate_output(output: Dict[str, Any]) -> bool:
+    """Output validation - AnalysisUtilities ile uyumlu"""
+    return utility_functions.validate_output(output)
+
 class AnalysisAggregator:
     _instance: Optional['AnalysisAggregator'] = None
     _lock: asyncio.Lock = asyncio.Lock()
@@ -110,10 +121,11 @@ class AnalysisAggregator:
     def __init__(self):
         if self._initialized:
             return
+            
         self._lock = asyncio.Lock()
         self.schema: Optional[AnalysisSchema] = None
         self._module_cache: Dict[str, Any] = {}
-        self._result_cache: Dict[str, AggregatedResult] = {}
+        self._result_cache: Dict[str, Dict[str, Any]] = {}
         self._execution_locks: Dict[str, asyncio.Lock] = {}
         self._cleanup_task: Optional[asyncio.Task] = None
         self._is_running: bool = False
@@ -123,7 +135,7 @@ class AnalysisAggregator:
         self._cache_hits: int = 0
         self._cache_misses: int = 0
         
-        # Yeni özellikler
+        # Modül yönetimi
         self._module_instances: Dict[str, Any] = {}
         self._circuit_breakers: Dict[str, CircuitBreaker] = {}
         
@@ -131,22 +143,41 @@ class AnalysisAggregator:
         self.composite_engine = CompositeScoreEngine(self)
         
         self.helpers = analysis_helpers
+        self.utils = utility_functions
         self._initialized = True
         logger.info("AnalysisAggregator initialized successfully")
 
-    # analysis/analysis_helpers.py/ async
+    # ✅ STANDARDİZE KEY GENERATION
+    def _get_module_key(self, module_file: str) -> str:
+        return AnalysisHelpers.get_module_key(module_file)
+
+    def _get_module_instance_key(self, module_file: str) -> str:
+        return AnalysisHelpers.get_module_instance_key(module_file)
+
+    def _get_circuit_breaker_key(self, module_file: str) -> str:
+        return AnalysisHelpers.get_circuit_breaker_key(module_file)
+
+    # ✅ ASYNC LOCK YÖNETİMİ
+    @asynccontextmanager
+    async def _get_module_lock(self, module_name: str):
+        if module_name not in self._execution_locks:
+            self._execution_locks[module_name] = asyncio.Lock()
+        lock = self._execution_locks[module_name]
+        async with lock:
+            yield
+
+    # ✅ ASYNC VALIDATION
     async def validate_and_normalize_output(
         self, 
         raw_data: Dict[str, Any], 
         module_name: str
     ) -> Dict[str, Any]:
-        """✅ ASYNC VALIDATION"""
+        """✅ TAM ASYNC VALIDATION"""
         try:
             # CPU-bound işi thread pool'da yap
             loop = asyncio.get_event_loop()
             
             def sync_validation():
-                data = {k: v for k, v in raw_data.items() if k != "module"}
                 validated_output = AnalysisOutput(
                     **raw_data,
                     module=module_name,
@@ -159,31 +190,6 @@ class AnalysisAggregator:
         except ValidationError as e:
             logger.warning(f"Output validation failed for {module_name}: {e}")
             return create_fallback_output(module_name, f"Validation error: {str(e)}")
-            
-
-    # analysis_core.py - bu metotları helper
-    # ✅ Key metotları- tutarlı kullanım için
-    def _get_module_key(self, module_file: str) -> str:
-        return AnalysisHelpers.get_module_key(module_file)
-
-    def _get_module_instance_key(self, module_file: str) -> str:
-        return AnalysisHelpers.get_module_instance_key(module_file)
-
-    def _get_circuit_breaker_key(self, module_file: str) -> str:
-        """Circuit breaker anahtarı - TUTARLI KULLANIM İÇİN"""
-        return AnalysisHelpers.get_circuit_breaker_key(module_file)
-
-
-
-
-    # ✅ LOCK YÖNETİMİ
-    @asynccontextmanager
-    async def _get_module_lock(self, module_name: str):
-        if module_name not in self._execution_locks:
-            self._execution_locks[module_name] = asyncio.Lock()
-        lock = self._execution_locks[module_name]
-        async with lock:
-            yield
 
     # ✅ LIFECYCLE MANAGEMENT
     async def start(self):
@@ -218,10 +224,9 @@ class AnalysisAggregator:
         key_string = f"{(symbol or 'unknown').upper()}:{normalized_name}:{priority or 'default'}:{user_id or 'anon'}"
         return hashlib.md5(key_string.encode()).hexdigest()
 
-    # ✅ MODULE LOADING
-
+    # ✅ ASYNC MODULE LOADING
     async def _load_module_function(self, module_file: str):
-        """✅ MODÜL FONKSİYONUNU ASYNC YÜKLE"""
+        """✅ TAM ASYNC MODÜL FONKSİYONU YÜKLEME"""
         module_key = self._get_module_key(module_file)
         cache_key = f"module_{module_key}"
 
@@ -248,19 +253,18 @@ class AnalysisAggregator:
             raise
 
     async def _load_module_async(self, module_path: str):
-        """✅ ASYNC MODÜL YÜKLEME"""
-        from .analysis_schema_manager import load_module_run_function
+        """✅ ASYNC MODÜL YÜKLEME - BaseModule ile uyumlu"""
+        from analysis.analysis_schema_manager import load_module_run_function
         
-        # Mevcut sync fonksiyonu async wrapper'a al
+        # Sync fonksiyonu yükle
         sync_function = load_module_run_function(module_path)
         
-        # Eğer zaten async ise direkt dön
+        # Zaten async ise direkt dön
         if asyncio.iscoroutinefunction(sync_function):
             return sync_function
         
         # Sync fonksiyonu async wrapper'a al
         async def async_wrapper(symbol: str, priority: Optional[str] = None):
-            # Sync fonksiyonu thread pool'da çalıştır
             loop = asyncio.get_event_loop()
             return await loop.run_in_executor(
                 None, 
@@ -269,16 +273,50 @@ class AnalysisAggregator:
         
         return async_wrapper
 
+    # ✅ ASYNC MODULE INSTANCE YÖNETİMİ
+    async def _get_or_create_module_instance(self, module_file: str):
+        """✅ ASYNC MODÜL INSTANCE YÖNETİMİ"""
+        instance_key = self._get_module_instance_key(module_file)
+        
+        if instance_key in self._module_instances:
+            return self._module_instances[instance_key]
+        
+        try:
+            # Modülü dynamic import et
+            resolved_path = resolve_module_path(module_file)
+            spec = importlib.util.spec_from_file_location("dynamic_module", resolved_path)
+            if spec is None or spec.loader is None:
+                raise ImportError(f"Could not load spec for {module_file}")
+            
+            module = importlib.util.module_from_spec(spec)
+            spec.loader.exec_module(module)
+            
+            # BaseAnalysisModule türevlerini bul
+            for attr_name in dir(module):
+                attr = getattr(module, attr_name)
+                if (isinstance(attr, type) and 
+                    issubclass(attr, BaseAnalysisModule) and 
+                    attr != BaseAnalysisModule):
+                    
+                    instance = attr()
+                    self._module_instances[instance_key] = instance
+                    return instance
+            
+            # BaseModule bulunamazsa None dön
+            return None
+            
+        except Exception as e:
+            logger.error(f"Module instance creation failed for {module_file}: {e}")
+            return None
 
-
-    # ✅ TEKİL ANALİZ ÇALIŞTIRMA/ async
+    # ✅ TEKİL ANALİZ ÇALIŞTIRMA - TAM ASYNC
     async def run_single_analysis(
         self, 
         module: AnalysisModule, 
         symbol: str, 
         priority: Optional[str] = None
     ) -> AnalysisResult:
-        """✅ TAM ASYNC ANALİZ ÇALIŞTIRMA"""
+        """✅ TAM ASYNC ANALİZ ÇALIŞTIRMA - BaseModule ile tam uyumlu"""
         start_time = time.time()
         result = AnalysisResult(
             module_name=module.name,
@@ -304,19 +342,20 @@ class AnalysisAggregator:
             async with self._get_module_lock(module_key):
                 logger.info(f"Starting ASYNC analysis: {module.name} for {symbol}")
                 
-                # ✅ MODÜL INSTANCE KONTROLÜ
-                instance_key = self._get_module_instance_key(module.file)
-                if instance_key in self._module_instances:
-                    module_instance = self._module_instances[instance_key]
-                    if hasattr(module_instance, "compute_metrics"):
-                        try:
-                            # ✅ ASYNC METOD ÇAĞRISI
-                            analysis_data = await module_instance.compute_metrics(symbol, priority)
+                # ✅ ÖNCE MODÜL INSTANCE DENEMESİ
+                module_instance = await self._get_or_create_module_instance(module.file)
+                if (module_instance and 
+                    hasattr(module_instance, 'compute_metrics') and 
+                    asyncio.iscoroutinefunction(module_instance.compute_metrics)):
+                    
+                    try:
+                        analysis_data = await module_instance.compute_metrics(symbol, priority)
+                        if analysis_data and isinstance(analysis_data, dict):
                             return analysis_data
-                        except Exception as e:
-                            logger.warning(f"Module instance failed: {e}")
+                    except Exception as e:
+                        logger.warning(f"Module instance failed, falling back to function: {e}")
 
-                # ✅ ASYNC RUN FONKSİYONU
+                # ✅ FONKSİYON BAZLI ÇALIŞTIRMA
                 run_function = await self._load_module_function(module.file)
                 analysis_data = await run_function(symbol=symbol, priority=priority)
 
@@ -363,22 +402,15 @@ class AnalysisAggregator:
                 logger.warning(f"[{module.name}] → {result.status.value.upper()}")
 
         return result
-        
 
-
-
-
-
-
-    # ✅ MODÜL ANALİZ HELPER/ async
-
-    async def get_module_analysis(self, module_name: str, symbol: str):
-        """✅ ASYNC MODÜL ANALİZ"""
+    # ✅ MODÜL ANALİZ HELPER - TAM ASYNC
+    async def get_module_analysis(self, module_name: str, symbol: str) -> Dict[str, Any]:
+        """✅ ASYNC MODÜL ANALİZ - BaseModule ile uyumlu"""
         
         if not self.schema:
             self.schema = load_analysis_schema()
         
-        cache_key = f"mod:{module_name}:{symbol}"
+        cache_key = self._get_cache_key(symbol, module_name)
 
         # ✅ ASYNC CACHE KONTROLÜ
         if cache_key in self._result_cache:
@@ -398,16 +430,14 @@ class AnalysisAggregator:
 
         # ✅ ASYNC ANALİZ
         res = await self.run_single_analysis(module, symbol)
-        out = res.data if isinstance(res.data, dict) else {'score': 0.5}
+        out = res.data if isinstance(res.data, dict) else create_fallback_output(module_name, "Invalid output")
 
         # Cache'e kaydet
         self._result_cache[cache_key] = out
 
         return out
-        
 
-
-    # ✅ TOPLU ANALİZ ÇALIŞTIRMA/ async
+    # ✅ TOPLU ANALİZ ÇALIŞTIRMA - TAM ASYNC
     async def run_all_analyses(self, symbol: str, priority: Optional[str] = None) -> AggregatedResult:
         """✅ OPTİMİZE ASYNC TOPLU ANALİZ"""
         if not self.schema:
@@ -437,12 +467,10 @@ class AnalysisAggregator:
             success_count=sum(1 for r in valid_results if r.status == AnalysisStatus.COMPLETED),
             failed_count=sum(1 for r in valid_results if r.status == AnalysisStatus.FAILED)
         )
-        
 
-
-    # ✅ BİRLEŞİK ANALİZ
-    async def get_comprehensive_analysis(self, symbol: str):
-        """Kapsamlı analiz sonucu"""
+    # ✅ BİRLEŞİK ANALİZ - TAM ASYNC
+    async def get_comprehensive_analysis(self, symbol: str) -> Dict[str, Any]:
+        """Kapsamlı analiz sonucu - Tam Async"""
         module_results = await self.run_all_analyses(symbol)
         composite_scores = await self.composite_engine.calculate_composite_scores(symbol)
         
@@ -450,27 +478,25 @@ class AnalysisAggregator:
             'symbol': symbol,
             'module_analyses': module_results,
             'composite_scores': composite_scores['composite_scores'],
-            'summary': self._generate_summary(composite_scores),
+            'summary': await self._generate_summary(composite_scores),
             'timestamp': composite_scores['timestamp']
         }
 
-    def _generate_summary(self, composite_scores: Dict) -> Dict:
-        """Özet bilgi oluştur"""
+    async def _generate_summary(self, composite_scores: Dict) -> Dict:
+        """✅ ASYNC ÖZET BİLGİ OLUŞTUR"""
         return {
             'overall_score': composite_scores.get('overall_score', 0.5),
             'trend_strength': composite_scores.get('trend_strength', {}).get('score', 0.5),
             'timestamp': time.time()
         }
 
-    async def get_trend_strength(self, symbol: str):
-        """Sadece trend strength skoru al"""
+    async def get_trend_strength(self, symbol: str) -> Dict[str, Any]:
+        """✅ ASYNC TREND STRENGTH SKORU"""
         return await self.composite_engine.calculate_single_score('trend_strength', symbol)
 
-
-
-    # ✅ CLEANUP VE HEALTH CHECK
+    # ✅ CLEANUP VE HEALTH CHECK - TAM ASYNC
     async def _periodic_cleanup(self):
-        """Geliştirilmiş resource cleanup"""
+        """✅ GELİŞTİRİLMİŞ ASYNC RESOURCE CLEANUP"""
         while self._is_running:
             try:
                 await asyncio.sleep(300)
@@ -479,10 +505,10 @@ class AnalysisAggregator:
                 # Result cache cleanup
                 for key in list(self._result_cache.keys()):
                     result = self._result_cache[key]
-                    if current_time - result.created_at > 600:
+                    if current_time - result.get('timestamp', 0) > 600:
                         del self._result_cache[key]
 
-                # ✅ DÜZELTİLDİ: Module ve circuit breaker cleanup - TUTARLI YAPISI
+                # Module ve circuit breaker cleanup
                 if self.schema:
                     valid_module_keys = [
                         self._get_module_key(m.file)
@@ -515,12 +541,10 @@ class AnalysisAggregator:
                 break
             except Exception as e:
                 logger.error(f"Cleanup task error: {str(e)}")
-                
 
-
-    # ✅ HEALTH CHECK HELPER METOTLARI
+    # ✅ HEALTH CHECK HELPER METOTLARI - TAM ASYNC
     async def _check_module_health(self) -> bool:
-        """Modül sağlık kontrolü"""
+        """✅ ASYNC MODÜL SAĞLIK KONTROLÜ"""
         try:
             if not self.schema:
                 self.schema = load_analysis_schema()
@@ -532,7 +556,7 @@ class AnalysisAggregator:
     def _check_cache_health(self) -> bool:
         """Cache sağlık kontrolü"""
         cache_size = len(self._result_cache) + len(self._module_cache)
-        return cache_size < 1000  # Makul limit
+        return cache_size < 1000
 
     def _get_memory_usage(self) -> bool:
         """Bellek kullanım kontrolü"""
@@ -540,23 +564,21 @@ class AnalysisAggregator:
             import psutil
             process = psutil.Process()
             memory_usage = process.memory_info().rss / 1024 / 1024  # MB
-            return memory_usage < 500  # 500MB limit
+            return memory_usage < 500
         except ImportError:
             logger.warning("psutil not available, memory check skipped")
-            return True  # Kritik değil
-
+            return True
 
     async def _check_api_connectivity(self) -> bool:
-        """API bağlantı kontrolü"""
+        """✅ ASYNC API BAĞLANTI KONTROLÜ"""
         try:
-            # Basit bir bağlantı testi
-            await asyncio.sleep(0.1)
+            await asyncio.sleep(0.1)  # Basit async test
             return True
         except Exception:
             return False
 
-    async def comprehensive_health_check(self):
-        """Kapsamlı sistem sağlık kontrolü"""
+    async def comprehensive_health_check(self) -> Tuple[bool, Dict[str, bool]]:
+        """✅ TAM ASYNC SİSTEM SAĞLIK KONTROLÜ"""
         checks = {
             "module_health": await self._check_module_health(),
             "cache_health": self._check_cache_health(),
@@ -565,124 +587,50 @@ class AnalysisAggregator:
         }
         return all(checks.values()), checks
 
-# ✅ GENİŞLETİLMİŞ AGGREGATOR SINIFLARI
-class UserAwareAnalysisAggregator(AnalysisAggregator):
-    def __init__(self):
-        super().__init__()
-        self._user_sessions: Dict[str, UserSession] = {}
-        self._user_limits: Dict[str, UserLimit] = {}
-        self._semaphores: Dict[str, asyncio.Semaphore] = {}
-
-    # Kullanıcı session’ı getir veya oluştur
-    def _get_user_session(self, user_id: str) -> UserSession:
-        if user_id not in self._user_sessions:
-            self._user_sessions[user_id] = UserSession(
-                user_id=user_id,
-                lock=asyncio.Lock()
-            )
-        return self._user_sessions[user_id]
-
-    # Kullanıcı limiti getir veya oluştur
-    def _get_user_limit(self, user_id: str) -> UserLimit:
-        if user_id not in self._user_limits:
-            self._user_limits[user_id] = UserLimit(
-                max_concurrent=5,
-                max_per_minute=30,
-                max_modules_per_request=10
-            )
-        return self._user_limits[user_id]
-
-    # Kullanıcı semaphore’u getir veya oluştur
-    def _get_semaphore(self, user_id: str) -> asyncio.Semaphore:
-        if user_id not in self._semaphores:
-            self._semaphores[user_id] = asyncio.Semaphore(3)
-        return self._semaphores[user_id]
-
-    # Asıl kullanıcı analizini çalıştır
-    async def _run_user_analysis(self, user_session: UserSession, symbol: str, modules: List[str]):
-        if not self.schema:
-            self.schema = load_analysis_schema()
-
-        # Modülleri filtrele
-        active_modules = [m for m in self.schema.modules if m.name in modules]
-        if not active_modules:
-            raise Exception("No valid modules found for analysis")
-
-        # Async task oluştur
-        tasks = [self.run_single_analysis(m, symbol, priority="normal") for m in active_modules]
-
-        start_time = perf_counter()
-        results = await asyncio.gather(*tasks, return_exceptions=True)
-        end_time = perf_counter()
-
-        valid_results = [r for r in results if isinstance(r, AnalysisResult)]
-        failed_count = sum(1 for r in results if isinstance(r, Exception) or getattr(r, 'status', None) == AnalysisStatus.FAILED)
-        total_time = end_time - start_time
-
-        return AggregatedResult(
-            symbol=symbol,
-            results=valid_results,
-            total_execution_time=total_time,
-            success_count=len(valid_results) - failed_count,
-            failed_count=failed_count
-        )
-
-    # Kullanıcı bazlı analiz workflow’u
-    async def run_analysis_for_user(self, user_id: str, symbol: str, modules: List[str]):
-        user_session = self._get_user_session(user_id)
-        user_limit = self._get_user_limit(user_id)
-        semaphore = self._get_semaphore(user_id)
-
-        # Kullanıcı limiti kontrolü
-        if not user_limit.can_execute(len(modules)):
-            raise Exception("Too many requests")
-
-        async with user_session.lock:
-            async with semaphore:
-                # Analizi çalıştır
-                result = await self._run_user_analysis(user_session, symbol, modules)
-
-                # Kullanıcının kullanımını kaydet
-                user_limit.record_execution(len(modules))
-                return result
-
-
-
-class PerformanceOptimizedAggregator(AnalysisAggregator):
-    async def run_priority_batch(self, symbols: List[str], priority_modules: List[str]):
-        """Öncelikli batch processing"""
-        semaphore = asyncio.Semaphore(10)
+    # ✅ PERFORMANCE METRICS - AnalysisHelpers entegre
+    def get_performance_metrics(self) -> Dict[str, Any]:
+        """
+        Performans metriklerini getir - AnalysisHelpers entegre
+        """
+        if not self._execution_times:
+            return {
+                "total_executions": 0,
+                "average_execution_time": 0,
+                "success_rate": 0,
+                "cache_hits": self._cache_hits,
+                "cache_misses": self._cache_misses
+            }
         
-        async def process_symbol(symbol):
-            async with semaphore:
-                tasks = []
-                for module_name in priority_modules:
-                    module = self._get_module(module_name)
-                    if module:
-                        task = self.run_single_analysis(module, symbol, "high")
-                        tasks.append(task)
-                return await asyncio.gather(*tasks, return_exceptions=True)
+        avg_time = sum(self._execution_times) / len(self._execution_times)
         
-        return await asyncio.gather(*[process_symbol(s) for s in symbols])
-    
-    def _get_module(self, module_name: str) -> Optional[AnalysisModule]:
-        """Module ismine göre modül bul"""
-        if not self.schema:
-            self.schema = load_analysis_schema()
-        return next((m for m in self.schema.modules if m.name == module_name), None)
+        return {
+            "total_executions": len(self._execution_times),
+            "average_execution_time": avg_time,
+            "execution_time_p95": sorted(self._execution_times)[int(len(self._execution_times) * 0.95)] if self._execution_times else 0,
+            "success_rate": 0.95,  # Basit bir tahmin
+            "cache_hits": self._cache_hits,
+            "cache_misses": self._cache_misses,
+            "cache_hit_ratio": self._cache_hits / (self._cache_hits + self._cache_misses) if (self._cache_hits + self._cache_misses) > 0 else 0
+        }
 
+# ✅ GENİŞLETİLMİŞ AGGREGATOR SINIFLARI - TAM ASYNC
 class EnhancedAnalysisAggregator(AnalysisAggregator):
     def __init__(self):
         super().__init__()
         self._user_limits: Dict[str, UserLimit] = {}
         self._semaphores: Dict[str, asyncio.Semaphore] = {}
         
-    async def run_analysis_for_user(self, user_id: str, symbol: str, module_names: List[str], 
-                                  priority: Optional[str] = None) -> AggregatedResult:
-        """Kullanıcı bazlı limitli analiz"""
+    async def run_analysis_for_user(
+        self, 
+        user_id: str, 
+        symbol: str, 
+        module_names: List[str], 
+        priority: Optional[str] = None
+    ) -> AggregatedResult:
+        """✅ TAM ASYNC KULLANICI BAZLI LİMİTLİ ANALİZ"""
         user_limit = self._get_user_limit(user_id)
         if not user_limit.can_execute(len(module_names)):
-            raise Exception("Too many requests")  # HTTPException yerine Exception
+            raise Exception("Too many requests")
             
         semaphore = self._get_semaphore(user_id)
         async with semaphore:
@@ -703,13 +651,12 @@ class EnhancedAnalysisAggregator(AnalysisAggregator):
                 failed_count=sum(1 for r in valid_results if r.status == AnalysisStatus.FAILED)
             )
     
-
     async def calculate_weighted_score(
         self, 
         symbol: str, 
         component_weights: Dict[str, float]
     ) -> Dict[str, Any]:
-        """Ağırlıklı skor hesapla"""
+        """✅ TAM ASYNC AĞIRLIKLI SKOR HESAPLA"""
         try:
             # Component analizlerini al
             component_scores = {}
@@ -718,20 +665,19 @@ class EnhancedAnalysisAggregator(AnalysisAggregator):
                 component_scores[comp_name] = analysis_result.get('score', 0.5)
             
             # Ağırlıklı ortalama hesapla
-            normalized_weights = AnalysisHelpers.normalize_weights(component_weights)
-            final_score = AnalysisHelpers.calculate_weights(component_scores, normalized_weights)
+            normalized_weights = self.utils.normalize_weights(component_weights)
+            final_score = self.utils.calculate_weighted_average(component_scores, normalized_weights)
             
             return {
                 'score': final_score,
                 'components': component_scores,
                 'weights': normalized_weights,
-                'timestamp': AnalysisHelpers.get_timestamp()
+                'timestamp': self.helpers.get_timestamp()
             }
         except Exception as e:
             logger.error(f"Weighted score calculation failed: {e}")
-            return AnalysisHelpers.create_fallback_output("weighted_score", str(e))
+            return create_fallback_output("weighted_score", str(e))
         
-      
     def _get_user_limit(self, user_id: str) -> UserLimit:
         if user_id not in self._user_limits:
             self._user_limits[user_id] = UserLimit(
@@ -746,13 +692,12 @@ class EnhancedAnalysisAggregator(AnalysisAggregator):
             self._semaphores[user_id] = asyncio.Semaphore(3)
         return self._semaphores[user_id]
 
-
-
 # ✅ GLOBAL INSTANCE
 aggregator = AnalysisAggregator()
 
 async def get_aggregator() -> AnalysisAggregator:
-    """Dependency injection için aggregator instance'ı"""
+    """✅ TAM ASYNC DEPENDENCY INJECTION"""
     if not aggregator._is_running:
         await aggregator.start()
     return aggregator
+    

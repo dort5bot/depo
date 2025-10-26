@@ -1,6 +1,8 @@
 # analysis/analysis_base_module.py
 """
 Base Analysis Module Abstract Class - Async Optimized
+analysis_base_module.py
+Version: 2.0.0
 =====================================================
 Tüm analiz modülleri bu sınıftan türemeli.
 AnalysisHelpers ile tam uyumlu, tam async yapı.

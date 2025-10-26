@@ -1,7 +1,7 @@
 # analysis/config/c_volat.py
 """
 Volatility & Regime Module Configuration - Analysis Helpers Uyumlu
-Version: 1.1.0
+Version: 1.2.0
 File: analysis/config/c_volat.py
 """
 

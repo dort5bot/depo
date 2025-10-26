@@ -1,14 +1,15 @@
 # analysis/config/c_portalloc.py
 """
-Portfolio Allocation Configuration Module - Analysis Helpers Uyumlu
-Version: 1.1.0
+c_portalloc.py
+Version: 1.2.0
+Portfolio Allocation Configuration Module - Analysis Helpers + Polars Uyumlu
 File: analysis/config/c_portalloc.py
 """
 
 from analysis.config.cm_base import BaseModuleConfig, ModuleLifecycle, ParallelMode
 from analysis.analysis_helpers import AnalysisHelpers
 
-# ✅ ANALYSIS_HELPERS UYUMLU PORTFOLIO ALLOCATION CONFIG
+# ✅ ANALYSIS_HELPERS + POLARS UYUMLU PORTFOLIO ALLOCATION CONFIG
 CONFIG = BaseModuleConfig(
     # ✅ BASE MODULE CONFIG
     module_name="portfolio_allocation",
@@ -19,10 +20,10 @@ CONFIG = BaseModuleConfig(
     job_type="batch",
     parallel_mode=ParallelMode.BATCH,
     output_type="allocation_weights",
-    objective="Portfolio optimization and asset allocation using advanced methods",
+    objective="Portfolio optimization and asset allocation using advanced methods with Polars support",
     maintainer="deepsek",
-    description="Black-Litterman, HRP, Risk Parity portfolio optimization with comprehensive metrics",
-    version="1.1.0",
+    description="Black-Litterman, HRP, Risk Parity portfolio optimization with comprehensive metrics (Polars compatible)",
+    version="1.2.0",  # Polars uyumlu versiyon
     lifecycle=ModuleLifecycle.DEVELOPMENT,
     enabled=True,
     
@@ -64,7 +65,8 @@ CONFIG = BaseModuleConfig(
         "data": {
             "lookback_period": 252,  # 1 year daily
             "min_data_points": 100,
-            "correlation_threshold": 0.7
+            "correlation_threshold": 0.7,
+            "dataframe_type": "polars"  # ✅ Polars desteği
         },
         
         "parallel_processing": {
@@ -98,7 +100,8 @@ PARAM_DESCRIPTIONS = {
     "hierarchical_risk_parity.linkage_method": "Linkage method for hierarchical clustering",
     "weights.sharpe": "Weight for Sharpe ratio in portfolio scoring",
     "weights.sortino": "Weight for Sortino ratio in portfolio scoring",
-    "constraints.max_allocation_per_asset": "Maximum allocation per asset (diversification limit)"
+    "constraints.max_allocation_per_asset": "Maximum allocation per asset (diversification limit)",
+    "data.dataframe_type": "Dataframe library type: 'polars' or 'pandas'"
 }
 
 # ✅ CONFIG VALIDATION ON IMPORT

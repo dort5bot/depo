@@ -1,7 +1,10 @@
 # analysis/onchain.py
 """
+analysis/onchain.py
+Version: 1.0.0
+
 On-Chain & Macro Analysis Module
-- File: onchain.py
+- File: onchain.py  
 - Config: analysis/config/c_onchain.py
 
 Purpose:
@@ -37,7 +40,7 @@ import pandas as pd
 
 # Pydantic and helper imports
 try:
-    from analysis.analysis_helpers import AnalysisOutput, AnalysisHelpers, analysis_helpers
+    from analysis.analysis_helpers import AnalysisOutput, AnalysisHelpers, AnalysisUtilities, analysis_helpers, utility_functions
     _HAVE_HELPERS = True
 except ImportError:
     _HAVE_HELPERS = False
@@ -80,50 +83,6 @@ except ImportError:
         async def get_metric(self, source, symbol, metric): return None
 
 _LOG = logging.getLogger(__name__)
-
-# ---------------------------
-# Pydantic Configuration Model
-# ---------------------------
-try:
-    from pydantic import BaseModel as PydanticBaseModel, validator
-    
-    class OnChainConfigModel(PydanticBaseModel):
-        """Pydantic configuration model for on-chain analysis"""
-        version: str = "1.0.0"
-        windows: Dict[str, int] = {"short_days": 7, "medium_days": 30, "long_days": 90}
-        weights: Dict[str, float] = {
-            "etf_net_flow": 0.15,
-            "stablecoin_flow": 0.15, 
-            "exchange_netflow": 0.20,
-            "net_realized_pl": 0.15,
-            "exchange_whale_ratio": 0.10,
-            "mvrv_zscore": 0.10,
-            "nupl": 0.05,
-            "sopr": 0.10
-        }
-        thresholds: Dict[str, float] = {"bullish": 0.65, "bearish": 0.35}
-        normalization: Dict[str, Any] = {"method": "zscore_clip", "clip_z": 3.0}
-        data_timeout_seconds: int = 10
-        explain_components_limit: int = 5
-        parallel_mode: str = "async"
-        prometheus: Dict[str, bool] = {"enable": False}
-        
-        @validator('weights')
-        def validate_weights(cls, v):
-            """Validate that weights sum to approximately 1.0"""
-            total = sum(v.values())
-            if not abs(total - 1.0) < 0.01:  # Allow 1% tolerance
-                _LOG.warning(f"On-chain weights sum to {total}, normalizing to 1.0")
-                # Normalize weights
-                v = {k: weight/total for k, weight in v.items()}
-            return v
-            
-except ImportError:
-    # Fallback without Pydantic
-    class OnChainConfigModel:
-        def __init__(self, **kwargs):
-            for k, v in kwargs.items():
-                setattr(self, k, v)
 
 # ---------------------------
 # Circuit Breaker with Helper Integration
@@ -203,11 +162,11 @@ class OnChainModule(BaseAnalysisModule):
         # Initialize configuration with Pydantic model
         config_dict = {**OnChainConfig, **(config or {})}
         try:
-            self.config = OnChainConfigModel(**config_dict)
+            self.config = OnChainConfig(**config_dict)
             self.config_dict = self.config.dict()  # For backward compatibility
         except Exception as e:
             _LOG.warning(f"Pydantic config failed: {e}, using dict config")
-            self.config = OnChainConfigModel(**config_dict)
+            self.config = OnChainConfig(**config_dict)
             self.config_dict = config_dict
 
         self.dp = data_provider or DataProvider()
@@ -216,12 +175,14 @@ class OnChainModule(BaseAnalysisModule):
         # Use AnalysisHelpers if available
         if _HAVE_HELPERS:
             self.helpers = AnalysisHelpers()
+            self.utils = AnalysisUtilities()
         else:
             self.helpers = None
+            self.utils = None
             
         # Normalize weights using helper if available
-        if self.helpers:
-            self.weights = self.helpers.normalize_weights(self.config.weights)
+        if self.utils:
+            self.weights = self.utils.normalize_weights(self.config.weights)
         else:
             self.weights = self._normalize_weights(self.config.weights)
 
@@ -253,10 +214,22 @@ class OnChainModule(BaseAnalysisModule):
         if not data:
             return None
         try:
-            ser = pd.Series(data).sort_index()
+            # ✅ Pandas DataFrame/Series dönüşümü
+            if isinstance(data, pd.DataFrame):
+                if 'net_flow' in data.columns:
+                    ser = data['net_flow'].sort_index()
+                else:
+                    ser = data.iloc[:, 0].sort_index()
+            elif isinstance(data, pd.Series):
+                ser = data.sort_index()
+            else:
+                # Dict veya list ise Series'e çevir
+                ser = pd.Series(data).sort_index()
+            
             self.cb.record_success()
             return ser
-        except Exception:
+        except Exception as e:
+            _LOG.error(f"ETF flow data processing error: {e}")
             return None
 
     async def _fetch_exchange_netflow(self, symbol: str) -> Optional[pd.Series]:
@@ -264,10 +237,21 @@ class OnChainModule(BaseAnalysisModule):
         if not data:
             return None
         try:
-            ser = pd.Series(data).sort_index()
+            # ✅ Pandas DataFrame/Series dönüşümü
+            if isinstance(data, pd.DataFrame):
+                if 'netflow' in data.columns:
+                    ser = data['netflow'].sort_index()
+                else:
+                    ser = data.iloc[:, 0].sort_index()
+            elif isinstance(data, pd.Series):
+                ser = data.sort_index()
+            else:
+                ser = pd.Series(data).sort_index()
+            
             self.cb.record_success()
             return ser
-        except Exception:
+        except Exception as e:
+            _LOG.error(f"Exchange netflow data processing error: {e}")
             return None
 
     async def _fetch_metric_generic(self, source: str, metric: str, symbol: str) -> Optional[pd.Series]:
@@ -275,21 +259,35 @@ class OnChainModule(BaseAnalysisModule):
         if not data:
             return None
         try:
-            ser = pd.Series(data).sort_index()
+            # ✅ Pandas DataFrame/Series dönüşümü
+            if isinstance(data, pd.DataFrame):
+                if metric in data.columns:
+                    ser = data[metric].sort_index()
+                else:
+                    ser = data.iloc[:, 0].sort_index()
+            elif isinstance(data, pd.Series):
+                ser = data.sort_index()
+            else:
+                ser = pd.Series(data).sort_index()
+            
             self.cb.record_success()
             return ser
-        except Exception:
+        except Exception as e:
+            _LOG.error(f"Metric {metric} data processing error: {e}")
             return None
 
     # -------------------------
     # Metric computations
     # -------------------------
     def _compute_rolling_sum(self, series: pd.Series, window_days: int) -> pd.Series:
+        """Pandas rolling sum with fallback"""
         if series is None or len(series) == 0:
             return pd.Series(dtype=float)
         try:
             return series.rolling(window=window_days, min_periods=1).sum()
-        except Exception:
+        except Exception as e:
+            _LOG.warning(f"Rolling sum failed, using fallback: {e}")
+            # Fallback: numpy convolution
             arr = np.asarray(series.fillna(0.0))
             if len(arr) == 0:
                 return pd.Series(dtype=float)
@@ -298,6 +296,7 @@ class OnChainModule(BaseAnalysisModule):
             return pd.Series(conv, index=series.index)
 
     def _score_component_from_series(self, series: pd.Series, method: str) -> float:
+        """Convert pandas Series to component score"""
         if series is None or series.empty:
             return 0.5  # neutral fallback
             
@@ -313,7 +312,7 @@ class OnChainModule(BaseAnalysisModule):
         Main metric computation with standardized AnalysisOutput
         """
         try:
-            # Fetch all data in parallel
+            # ✅ Async data fetching - multi-user friendly
             tasks = {
                 "etf_net_flow": asyncio.create_task(self._fetch_etf_net_flow(symbol)),
                 "exchange_netflow": asyncio.create_task(self._fetch_exchange_netflow(symbol)),
@@ -334,7 +333,7 @@ class OnChainModule(BaseAnalysisModule):
                     _LOG.exception("Task %s failed: %s", key, e)
                     results[key] = None
 
-            # Compute component scores
+            # ✅ Compute component scores with pandas
             components = {}
             windows = self.config.windows if hasattr(self.config, 'windows') else {"medium_days": 30}
             medium = windows.get("medium_days", 30)
@@ -342,7 +341,7 @@ class OnChainModule(BaseAnalysisModule):
             try:
                 # ETF net flow: more positive is bullish
                 etf_series = results.get("etf_net_flow")
-                if etf_series is not None:
+                if etf_series is not None and not etf_series.empty:
                     etf_roll = self._compute_rolling_sum(etf_series.fillna(0), medium)
                     components["etf_net_flow"] = self._score_component_from_series(etf_roll, "zscore_clip")
                 else:
@@ -350,7 +349,7 @@ class OnChainModule(BaseAnalysisModule):
 
                 # Stablecoin flow: inflow to exchanges -> bearish (invert)
                 sc_series = results.get("stablecoin_flow")
-                if sc_series is not None:
+                if sc_series is not None and not sc_series.empty:
                     sc_roll = self._compute_rolling_sum(sc_series.fillna(0), medium)
                     sc_score = 1.0 - self._score_component_from_series(sc_roll, "zscore_clip")
                     components["stablecoin_flow"] = float(np.clip(sc_score, 0.0, 1.0))
@@ -359,7 +358,7 @@ class OnChainModule(BaseAnalysisModule):
 
                 # Exchange netflow: positive inflow -> bearish (invert)
                 ex_series = results.get("exchange_netflow")
-                if ex_series is not None:
+                if ex_series is not None and not ex_series.empty:
                     ex_roll = self._compute_rolling_sum(ex_series.fillna(0), medium)
                     ex_score = 1.0 - self._score_component_from_series(ex_roll, "zscore_clip")
                     components["exchange_netflow"] = float(np.clip(ex_score, 0.0, 1.0))
@@ -368,7 +367,7 @@ class OnChainModule(BaseAnalysisModule):
 
                 # Net Realized P/L: large realized profit -> bearish (invert)
                 nrp = results.get("net_realized_pl")
-                if nrp is not None:
+                if nrp is not None and not nrp.empty:
                     nrp_roll = self._compute_rolling_sum(nrp.fillna(0), medium)
                     nrp_score = 1.0 - self._score_component_from_series(nrp_roll, "zscore_clip")
                     components["net_realized_pl"] = float(np.clip(nrp_score, 0.0, 1.0))
@@ -377,7 +376,7 @@ class OnChainModule(BaseAnalysisModule):
 
                 # Exchange whale ratio: higher -> bearish (invert)
                 ewr = results.get("exchange_whale_ratio")
-                if ewr is not None:
+                if ewr is not None and not ewr.empty:
                     ewr_score = 1.0 - self._score_component_from_series(ewr.fillna(0), "zscore_clip")
                     components["exchange_whale_ratio"] = float(np.clip(ewr_score, 0.0, 1.0))
                 else:
@@ -385,7 +384,7 @@ class OnChainModule(BaseAnalysisModule):
 
                 # MVRV Z-Score: higher -> overvalued -> bearish (invert)
                 mvrv = results.get("mvrv_zscore")
-                if mvrv is not None:
+                if mvrv is not None and not mvrv.empty:
                     mvrv_score = 1.0 - self._score_component_from_series(mvrv.fillna(0), "zscore_clip")
                     components["mvrv_zscore"] = float(np.clip(mvrv_score, 0.0, 1.0))
                 else:
@@ -393,7 +392,7 @@ class OnChainModule(BaseAnalysisModule):
 
                 # NUPL: high positive -> euphoria -> bearish (invert)
                 nupl = results.get("nupl")
-                if nupl is not None:
+                if nupl is not None and not nupl.empty:
                     nupl_score = 1.0 - self._score_component_from_series(nupl.fillna(0), "zscore_clip")
                     components["nupl"] = float(np.clip(nupl_score, 0.0, 1.0))
                 else:
@@ -401,7 +400,7 @@ class OnChainModule(BaseAnalysisModule):
 
                 # SOPR: >1 profit being realized -> bearish (invert)
                 sopr = results.get("sopr")
-                if sopr is not None:
+                if sopr is not None and not sopr.empty:
                     sopr_score = 1.0 - self._score_component_from_series(sopr.fillna(0), "zscore_clip")
                     components["sopr"] = float(np.clip(sopr_score, 0.0, 1.0))
                 else:
@@ -410,18 +409,21 @@ class OnChainModule(BaseAnalysisModule):
             except Exception as e:
                 _LOG.exception("Error computing components: %s", e)
 
-            # Calculate weighted score
-            weighted_sum = 0.0
-            total_weight = 0.0
-            for comp_name, weight in self.weights.items():
-                comp_val = components.get(comp_name, 0.5)
-                weighted_sum += comp_val * weight
-                total_weight += weight
+            # ✅ Calculate weighted score using helper if available
+            if self.utils:
+                score = self.utils.calculate_weighted_average(components, self.weights)
+            else:
+                weighted_sum = 0.0
+                total_weight = 0.0
+                for comp_name, weight in self.weights.items():
+                    comp_val = components.get(comp_name, 0.5)
+                    weighted_sum += comp_val * weight
+                    total_weight += weight
 
-            score = weighted_sum / total_weight if total_weight > 0 else 0.5
-            score = float(np.clip(score, 0.0, 1.0))
+                score = weighted_sum / total_weight if total_weight > 0 else 0.5
+                score = float(np.clip(score, 0.0, 1.0))
 
-            # Determine signal
+            # ✅ Determine signal
             thresholds = self.config.thresholds if hasattr(self.config, 'thresholds') else {"bullish": 0.65, "bearish": 0.35}
             if score >= thresholds.get("bullish", 0.65):
                 signal = "bullish"
@@ -430,13 +432,13 @@ class OnChainModule(BaseAnalysisModule):
             else:
                 signal = "neutral"
 
-            # Calculate confidence based on component consistency
+            # ✅ Calculate confidence
             confidence = self._calculate_confidence(list(components.values()))
 
-            # Build explanation
+            # ✅ Build explanation
             explain = self._build_explanation(components, results)
 
-            # Create standardized output
+            # ✅ Create standardized output
             timestamp = self.helpers.get_timestamp() if self.helpers else time.time()
             
             return AnalysisOutput(
@@ -451,7 +453,7 @@ class OnChainModule(BaseAnalysisModule):
 
         except Exception as e:
             _LOG.error("Error in compute_metrics: %s", e)
-            # Return fallback output
+            # Return fallback output using helper if available
             if self.helpers:
                 fallback = self.helpers.create_fallback_output(self.module_name, str(e))
                 return AnalysisOutput(**fallback)
@@ -470,7 +472,12 @@ class OnChainModule(BaseAnalysisModule):
         """Calculate confidence based on component consistency"""
         if not scores:
             return 0.0
-        # Higher confidence when components have clear signals (away from 0.5)
+        
+        # Use helper if available
+        if self.utils:
+            return self.utils.calculate_confidence(scores)
+        
+        # Fallback calculation
         avg_distance = np.mean([abs(score - 0.5) for score in scores])
         confidence = avg_distance * 2.0  # Scale to 0-1
         return float(np.clip(confidence, 0.0, 1.0))
@@ -494,7 +501,7 @@ class OnChainModule(BaseAnalysisModule):
             direction = "bullish" if value > 0.6 else "bearish" if value < 0.4 else "neutral"
             explanations.append(f"{name}({direction}:{value:.2f})")
         
-        available_metrics = [k for k, v in results.items() if v is not None]
+        available_metrics = [k for k, v in results.items() if v is not None and not v.empty]
         return f"Top factors: {', '.join(explanations)} | Data sources: {len(available_metrics)}/{len(results)}"
 
     async def generate_report(self, symbol: str) -> Dict[str, Any]:
@@ -529,18 +536,19 @@ class OnChainModule(BaseAnalysisModule):
         signal = metrics["signal"]
         
         if signal == "bullish":
-            return f"Strong bullish on-chain signals for {metrics.get('symbol', 'asset')} (score: {score:.3f})"
+            return f"Strong bullish on-chain signals (score: {score:.3f})"
         elif signal == "bearish":
-            return f"Bearish on-chain pressure detected for {metrics.get('symbol', 'asset')} (score: {score:.3f})"
+            return f"Bearish on-chain pressure detected (score: {score:.3f})"
         else:
-            return f"Mixed or neutral on-chain signals for {metrics.get('symbol', 'asset')} (score: {score:.3f})"
+            return f"Mixed or neutral on-chain signals (score: {score:.3f})"
 
     async def run(self, symbol: Union[str, List[str]], priority: Optional[int] = None) -> Dict[str, Any]:
-        """Backward-compatible entrypoint"""
+        """Backward-compatible entrypoint - multi-user friendly"""
         if isinstance(symbol, str):
             report = await self.generate_report(symbol)
             return {symbol: report}
         elif isinstance(symbol, list):
+            # ✅ Multi-user async processing
             tasks = {s: asyncio.create_task(self.generate_report(s)) for s in symbol}
             out = {}
             for s, t in tasks.items():
@@ -548,7 +556,12 @@ class OnChainModule(BaseAnalysisModule):
                     out[s] = await t
                 except Exception as e:
                     _LOG.exception("Report generation failed for %s: %s", s, e)
-                    out[s] = {"error": str(e)}
+                    # Use fallback output
+                    if self.helpers:
+                        fallback = self.helpers.create_fallback_output(self.module_name, str(e))
+                        out[s] = {"report": {"error": str(e)}, "metrics": fallback}
+                    else:
+                        out[s] = {"error": str(e)}
             return out
         else:
             raise ValueError("symbol must be str or list of str")

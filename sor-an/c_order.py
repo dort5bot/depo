@@ -1,5 +1,6 @@
 """
 analysis/config/c_order.py
+Version: 1.1.0
 Configuration for Order Flow & Microstructure module (c_order.py)
 Pydantic model for type safety and validation.
 analysis/analysis_helpers.py ile uyumlu

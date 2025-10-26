@@ -1,5 +1,6 @@
 """
 analysis/config/c_micro.py
+Version: 2.0.0
 Micro Alpha Factor Configuration
 Pydantic model for type safety and validation.
 """

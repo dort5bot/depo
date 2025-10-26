@@ -1,8 +1,11 @@
 # analysis/config/c_deriv.py
 """
+analysis/config/c_deriv.py
+Version: 2.0.0 - Analysis Helpers Tam Uyumlu
+
 Derivatives & Sentiment Analysis Configuration
 Futures pozisyon verilerine dayalı sentiment analizi için Pydantic config
-analysis/analysis_helpers.py ile uyumlu
+Tam async, multi-user yapı için optimize edilmiş
 """
 
 from pydantic import BaseModel, Field, validator
@@ -14,8 +17,8 @@ class DerivSentimentConfig(BaseModel):
     
     # Module metadata
     module_name: str = Field(default="derivatives_sentiment")
-    version: str = Field(default="1.0.0")
-    description: str = Field(default="Futures market positioning and sentiment analysis")
+    version: str = Field(default="2.0.0")
+    description: str = Field(default="Futures market positioning and sentiment analysis - Async Multi-User")
     
     # Ağırlıklar (toplam 1.0 olmalı)
     weights: Dict[str, float] = Field(
@@ -44,15 +47,18 @@ class DerivSentimentConfig(BaseModel):
         }
     )
     
-    # Parametreler
-    parameters: Dict[str, int] = Field(
+    # Parametreler - Async için optimize
+    parameters: Dict[str, Any] = Field(
         default={
             "oi_lookback": 24,
             "funding_lookback": 8,
             "liquidation_window": 12,
             "volatility_period": 20,
             "min_data_points": 5,
-            "cache_ttl": 60
+            "cache_ttl": 60,
+            "async_timeout": 30,
+            "max_concurrent_requests": 10,
+            "batch_size": 5
         }
     )
     
@@ -60,14 +66,16 @@ class DerivSentimentConfig(BaseModel):
     normalization: Dict[str, Any] = Field(
         default={
             "method": "tanh",
-            "scale_factor": 3,
+            "scale_factor": 3.0,
             "rolling_window": 100,
-            "use_robust": True
+            "use_robust": True,
+            "output_range_min": 0.0,
+            "output_range_max": 1.0
         }
     )
     
-    # API ve Data ayarları
-    data_sources: Dict[str, str] = Field(
+    # API ve Data ayarları - Async için
+    data_sources: Dict[str, Any] = Field(
         default={
             "funding_rate": "/fapi/v1/fundingRate",
             "open_interest": "/fapi/v1/openInterestHist",
@@ -75,17 +83,22 @@ class DerivSentimentConfig(BaseModel):
             "liquidation_orders": "/fapi/v1/liquidationOrders",
             "taker_ratio": "/fapi/v1/takerlongshortRatio",
             "timeframe": "5m",
-            "limit": 100
+            "limit": 100,
+            "retry_attempts": 3,
+            "retry_delay": 1.0
         }
     )
     
-    # Risk ve Sınırlamalar
+    # Risk ve Sınırlamalar - Multi-User için
     limits: Dict[str, int] = Field(
         default={
             "max_symbols_batch": 10,
             "request_timeout": 30,
-            "rate_limit_delay": 0,
-            "circuit_breaker_failures": 5
+            "rate_limit_delay": 0.1,
+            "circuit_breaker_failures": 5,
+            "max_users": 100,
+            "user_request_limit": 1000,
+            "memory_limit_mb": 512
         }
     )
     
@@ -95,17 +108,20 @@ class DerivSentimentConfig(BaseModel):
             "funding_rate": {
                 "description": "Funding rate sentiment (-1 to 1)",
                 "formula": "tanh((current_funding - avg_funding) * 1000)",
-                "interpretation": "Positive = perpetual premium, Negative = discount"
+                "interpretation": "Positive = perpetual premium, Negative = discount",
+                "async_safe": True
             },
             "open_interest": {
                 "description": "Open Interest change sentiment",
                 "formula": "tanh(oi_change * 10)",
-                "interpretation": "Positive = new positions, Negative = position closing"
+                "interpretation": "Positive = new positions, Negative = position closing",
+                "async_safe": True
             },
             "liquidation_heat": {
                 "description": "Liquidation intensity metric",
                 "formula": "tanh(total_liquidation / 1e6)",
-                "interpretation": "High values indicate market stress"
+                "interpretation": "High values indicate market stress",
+                "async_safe": True
             }
         }
     )
@@ -113,19 +129,34 @@ class DerivSentimentConfig(BaseModel):
     # Modül yaşam döngüsü
     lifecycle: Dict[str, str] = Field(
         default={
-            "stage": "development",
-            "stability": "beta",
+            "stage": "production",
+            "stability": "stable",
+            "async_compatible": "true",
+            "multi_user_safe": "true",
             "deprecation_date": None
         }
     )
     
-    # Paralel işlem ayarları
+    # Paralel işlem ayarları - Async için optimize
     parallel_config: Dict[str, Any] = Field(
         default={
             "mode": "async",
             "max_concurrent": 5,
             "batch_size": 3,
-            "job_type": "io_bound"
+            "job_type": "io_bound",
+            "use_thread_pool": False,
+            "prefetch_data": True,
+            "connection_pool_size": 10
+        }
+    )
+
+    # Performance monitoring
+    performance: Dict[str, Any] = Field(
+        default={
+            "enable_metrics": True,
+            "metrics_retention": 3600,
+            "slow_query_threshold": 5.0,
+            "log_level": "INFO"
         }
     )
 
@@ -143,8 +174,17 @@ class DerivSentimentConfig(BaseModel):
             raise ValueError('Thresholds must be ordered: extreme_bear < bearish < bullish < extreme_bull')
         return v
 
+    @validator('parameters')
+    def validate_positive_parameters(cls, v):
+        positive_params = ['oi_lookback', 'funding_lookback', 'cache_ttl', 'async_timeout']
+        for param in positive_params:
+            if param in v and v[param] <= 0:
+                raise ValueError(f'{param} must be positive')
+        return v
+
     class Config:
         extra = "forbid"  # Extra fields not allowed
+        validate_assignment = True
 
 
 # Default configuration instance
@@ -157,12 +197,15 @@ PARAM_DESCRIPTIONS = {
     "oi_lookback": "Open Interest analizi için lookback periyodu (saat)",
     "funding_lookback": "Funding rate analizi için lookback",
     "liquidation_window": "Likidasyon analizi için pencere boyutu",
-    "normalization.method": "Metrik normalizasyon yöntemi (tanh/zscore/minmax)"
+    "normalization.method": "Metrik normalizasyon yöntemi (tanh/zscore/minmax)",
+    "async_timeout": "Async işlemler için timeout süresi (saniye)",
+    "max_concurrent_requests": "Maksimum eşzamanlı istek sayısı"
 }
 
 # Validasyon kuralları
 VALIDATION_RULES = {
     "weights_sum": {"rule": "sum == 1.0", "tolerance": 0.01},
     "threshold_ordering": {"rule": "extreme_bear < bearish < bullish < extreme_bull"},
-    "positive_parameters": {"params": ["oi_lookback", "funding_lookback", "cache_ttl"]}
+    "positive_parameters": {"params": ["oi_lookback", "funding_lookback", "cache_ttl", "async_timeout"]},
+    "async_safe": {"rule": "All metrics must be async safe"}
 }

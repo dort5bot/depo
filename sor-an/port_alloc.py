@@ -1,20 +1,18 @@
 # analysis/port_alloc.py
 """
-Portfolio Optimization & Allocation Module - Analysis Helpers Uyumlu
-Version: 1.1.0
+port_alloc.py
+Version: 1.2.0
+Portfolio Optimization & Allocation Module - Analysis Helpers + Polars Uyumlu
 Black-Litterman, HRP, Risk Parity optimizasyonları ile dinamik portföy ayırma
-
-⚠️ Küçük Not:
-port_alloc.py'de compute_metrics metodu symbols: List[str] parametresi alıyor (tek sembol yerine liste). Bu analysis_core.py'nin batch processing modunda sorunsuz çalışacak, ancak tekil sembol analizi için adaptasyon gerekebilir.
-
 """
 
 import numpy as np
 import pandas as pd
+import polars as pl
 from scipy.optimize import minimize
-from scipy.cluster.hierarchy import linkage, dendrogram
+from scipy.cluster.hierarchy import linkage
 from scipy.spatial.distance import squareform
-from typing import Dict, List, Tuple, Optional, Any
+from typing import Dict, List, Tuple, Optional, Any, Union
 import logging
 from dataclasses import dataclass
 import asyncio
@@ -39,7 +37,7 @@ class PortfolioMetrics:
     max_drawdown: float
     volatility: float
     expected_return: float
-    correlation_matrix: pd.DataFrame
+    correlation_matrix: pl.DataFrame
 
 @dataclass
 class AllocationResult:
@@ -55,7 +53,7 @@ class AllocationResult:
 
 class PortfolioAllocationModule(BaseAnalysisModule):
     """
-    Portfolio Optimization & Allocation Module - Analysis Helpers Uyumlu
+    Portfolio Optimization & Allocation Module - Analysis Helpers + Polars Uyumlu
     Dinamik portföy optimizasyonu ve varlık ayırma
     """
     
@@ -65,7 +63,7 @@ class PortfolioAllocationModule(BaseAnalysisModule):
         # ✅ ANALYSIS_HELPERS INTEGRATION
         self.helpers = AnalysisHelpers
         self.module_name = "portfolio_allocation"
-        self.version = "1.1.0"
+        self.version = "1.2.0"  # Polars uyumlu versiyon
         
         # Load configuration - ANALYSIS_HELPERS UYUMLU
         if config is None:
@@ -87,18 +85,10 @@ class PortfolioAllocationModule(BaseAnalysisModule):
             max_workers=self.parameters.get("parallel_processing", {}).get("max_workers", 4)
         )
         
-        # Metrik dependency graph
-        self.dependencies = {
-            "returns": [],
-            "volatility": ["returns"],
-            "correlation": ["returns"],
-            "covariance": ["returns"],
-            "sharpe": ["returns", "volatility"],
-            "sortino": ["returns", "volatility"],
-            "var": ["returns", "volatility"]
-        }
+        # Dataframe type configuration
+        self.dataframe_type = self.parameters.get("data", {}).get("dataframe_type", "polars")
         
-        logger.info(f"PortfolioAllocationModule initialized with {len(self.weights)} scoring components")
+        logger.info(f"PortfolioAllocationModule initialized with {len(self.weights)} scoring components (Polars: {self.dataframe_type})")
 
     def _get_default_config(self) -> Dict[str, Any]:
         """Fallback config oluştur"""
@@ -122,14 +112,18 @@ class PortfolioAllocationModule(BaseAnalysisModule):
                     "hierarchical_risk_parity": {"enabled": True},
                     "risk_parity": {"enabled": True}
                 },
-                "data": {"lookback_period": 252, "min_data_points": 100},
+                "data": {
+                    "lookback_period": 252, 
+                    "min_data_points": 100,
+                    "dataframe_type": "polars"  # ✅ Default Polars
+                },
                 "parallel_processing": {"max_workers": 4}
             }
         }
     
     @cache_result(ttl=300)  # 5 dakika cache
-    async def get_historical_prices(self, symbols: List[str], lookback: int = 252) -> pd.DataFrame:
-        """Semboller için geçmiş fiyat verilerini getir"""
+    async def get_historical_prices(self, symbols: List[str], lookback: int = 252) -> Union[pd.DataFrame, pl.DataFrame]:
+        """Semboller için geçmiş fiyat verilerini getir - Polars uyumlu"""
         try:
             price_data = {}
             
@@ -145,27 +139,52 @@ class PortfolioAllocationModule(BaseAnalysisModule):
                     closes = [float(k[4]) for k in klines_data]  # Close price
                     price_data[symbol] = closes
             
-            return pd.DataFrame(price_data)
+            # ✅ Polars veya Pandas dönüşümü
+            if self.dataframe_type == "polars":
+                return pl.DataFrame(price_data)
+            else:
+                return pd.DataFrame(price_data)
             
         except Exception as e:
             logger.error(f"Error fetching historical prices: {e}")
             raise
     
-    def calculate_returns(self, prices: pd.DataFrame) -> pd.DataFrame:
-        """Log getirileri hesapla"""
-        return np.log(prices / prices.shift(1)).dropna()
+    def calculate_returns(self, prices: Union[pd.DataFrame, pl.DataFrame]) -> Union[pd.DataFrame, pl.DataFrame]:
+        """Log getirileri hesapla - Polars uyumlu"""
+        if isinstance(prices, pl.DataFrame):
+            # ✅ Polars ile log returns
+            returns_data = {}
+            for col in prices.columns:
+                if col != "date":  # Date column kontrolü
+                    series = prices[col]
+                    log_returns = np.log(series / series.shift(1))
+                    returns_data[col] = log_returns
+            
+            returns_df = pl.DataFrame(returns_data)
+            return returns_df.drop_nulls()
+        else:
+            # ✅ Pandas ile log returns
+            return np.log(prices / prices.shift(1)).dropna()
     
-    def calculate_portfolio_metrics(self, returns: pd.DataFrame, weights: np.ndarray) -> PortfolioMetrics:
-        """Portföy metriklerini hesapla"""
+    def calculate_portfolio_metrics(self, returns: Union[pd.DataFrame, pl.DataFrame], weights: np.ndarray) -> PortfolioMetrics:
+        """Portföy metriklerini hesapla - Polars uyumlu"""
+        
+        # ✅ Returns'ü numpy array'e dönüştür
+        if isinstance(returns, pl.DataFrame):
+            returns_array = returns.select(pl.all().exclude("date")).to_numpy() if "date" in returns.columns else returns.to_numpy()
+            symbols = [col for col in returns.columns if col != "date"]
+        else:
+            returns_array = returns.values
+            symbols = returns.columns.tolist()
         
         # Portföy getirisi ve volatilitesi
-        portfolio_returns = returns.dot(weights)
+        portfolio_returns = returns_array.dot(weights)
         portfolio_volatility = np.std(portfolio_returns) * np.sqrt(252)
         expected_return = np.mean(portfolio_returns) * 252
         
         # Sharpe Ratio
         risk_free_rate = self.parameters.get("metrics", {}).get("sharpe_ratio", {}).get("risk_free_rate", 0.02)
-        sharpe = (expected_return - risk_free_rate) / portfolio_volatility
+        sharpe = (expected_return - risk_free_rate) / portfolio_volatility if portfolio_volatility > 0 else 0
         
         # Sortino Ratio
         downside_returns = portfolio_returns[portfolio_returns < 0]
@@ -181,12 +200,15 @@ class PortfolioAllocationModule(BaseAnalysisModule):
         
         # Maximum Drawdown
         cumulative_returns = (1 + portfolio_returns).cumprod()
-        rolling_max = cumulative_returns.expanding().max()
+        rolling_max = np.maximum.accumulate(cumulative_returns)
         drawdown = (cumulative_returns - rolling_max) / rolling_max
         max_drawdown = drawdown.min()
         
-        # Correlation Matrix
-        correlation_matrix = returns.corr()
+        # ✅ Correlation Matrix (Polars uyumlu)
+        if isinstance(returns, pl.DataFrame):
+            correlation_matrix = returns.select(pl.all().exclude("date")).corr() if "date" in returns.columns else returns.corr()
+        else:
+            correlation_matrix = pl.DataFrame(returns.corr())
         
         return PortfolioMetrics(
             sharpe_ratio=sharpe,
@@ -199,70 +221,89 @@ class PortfolioAllocationModule(BaseAnalysisModule):
             correlation_matrix=correlation_matrix
         )
     
-    def _calculate_var(self, returns: pd.Series, confidence: float) -> float:
+    def _calculate_var(self, returns: np.ndarray, confidence: float) -> float:
         """Value at Risk hesapla"""
         return np.percentile(returns, (1 - confidence) * 100)
     
-    def _calculate_conditional_var(self, returns: pd.Series, confidence: float) -> float:
+    def _calculate_conditional_var(self, returns: np.ndarray, confidence: float) -> float:
         """Conditional VaR (Expected Shortfall) hesapla"""
         var = self._calculate_var(returns, confidence)
         return returns[returns <= var].mean()
     
-    def black_litterman_optimization(self, returns: pd.DataFrame, market_caps: Dict[str, float] = None) -> np.ndarray:
-        """Black-Litterman model ile optimizasyon"""
+    def black_litterman_optimization(self, returns: Union[pd.DataFrame, pl.DataFrame], market_caps: Dict[str, float] = None) -> np.ndarray:
+        """Black-Litterman model ile optimizasyon - Polars uyumlu"""
         try:
+            # ✅ Covariance matrix hesapla
+            if isinstance(returns, pl.DataFrame):
+                cov_matrix = returns.select(pl.all().exclude("date")).cov() * 252 if "date" in returns.columns else returns.cov() * 252
+                symbols = [col for col in returns.columns if col != "date"]
+                cov_matrix_pd = pd.DataFrame(cov_matrix.to_numpy(), columns=symbols, index=symbols)
+            else:
+                cov_matrix_pd = returns.cov() * 252
+                symbols = returns.columns.tolist()
+            
             # Equilibrium returns (CAPM)
-            cov_matrix = returns.cov() * 252
-            market_weights = self._calculate_market_weights(market_caps, returns.columns)
+            market_weights = self._calculate_market_weights(market_caps, symbols)
             
             # Implied equilibrium returns
             tau = self.parameters.get("optimization_methods", {}).get("black_litterman", {}).get("tau", 0.05)
             risk_aversion = self.parameters.get("optimization_methods", {}).get("black_litterman", {}).get("risk_aversion", 2.5)
             
-            pi = risk_aversion * cov_matrix.dot(market_weights)  # Implied returns
+            pi = risk_aversion * cov_matrix_pd.dot(market_weights)  # Implied returns
             
             # Views (burada basit trend views kullanıyoruz)
-            P, Q = self._generate_views(returns)
-            omega = self._generate_confidence_matrix(P, cov_matrix, tau)
+            P, Q = self._generate_views(returns, symbols)
+            omega = self._generate_confidence_matrix(P, cov_matrix_pd, tau)
             
             # Black-Litterman formula
             pi_bl = self._calculate_black_litterman_returns(
-                pi, cov_matrix, tau, P, Q, omega
+                pi, cov_matrix_pd, tau, P, Q, omega
             )
             
             # Optimize weights
-            weights = self._mean_variance_optimization(pi_bl, cov_matrix)
+            weights = self._mean_variance_optimization(pi_bl, cov_matrix_pd)
             return weights
             
         except Exception as e:
             logger.error(f"Black-Litterman optimization failed: {e}")
-            return self._equal_weight_allocation(returns.shape[1])
+            return self._equal_weight_allocation(len(symbols))
     
-    def hierarchical_risk_parity(self, returns: pd.DataFrame) -> np.ndarray:
-        """Hierarchical Risk Parity optimizasyonu"""
+    def hierarchical_risk_parity(self, returns: Union[pd.DataFrame, pl.DataFrame]) -> np.ndarray:
+        """Hierarchical Risk Parity optimizasyonu - Polars uyumlu"""
         try:
-            cov_matrix = returns.cov() * 252
-            corr_matrix = returns.corr()
+            if isinstance(returns, pl.DataFrame):
+                corr_matrix = returns.select(pl.all().exclude("date")).corr() if "date" in returns.columns else returns.corr()
+                corr_matrix_np = corr_matrix.to_numpy()
+                symbols = [col for col in returns.columns if col != "date"]
+            else:
+                corr_matrix_np = returns.corr().values
+                symbols = returns.columns.tolist()
             
             # Distance matrix
-            distance_matrix = np.sqrt((1 - corr_matrix) / 2)
+            distance_matrix = np.sqrt((1 - corr_matrix_np) / 2)
             
             # Hierarchical clustering
             linkage_method = self.parameters.get("optimization_methods", {}).get("hierarchical_risk_parity", {}).get("linkage_method", "ward")
-            Z = linkage(squareform(distance_matrix.values), method=linkage_method)
+            Z = linkage(squareform(distance_matrix), method=linkage_method)
             
             # HRP allocation
-            weights = self._hrp_allocation(cov_matrix.values, Z)
+            weights = self._hrp_allocation(corr_matrix_np, Z)
             return weights
             
         except Exception as e:
             logger.error(f"HRP optimization failed: {e}")
-            return self._equal_weight_allocation(returns.shape[1])
+            return self._equal_weight_allocation(len(symbols))
     
-    def risk_parity_optimization(self, returns: pd.DataFrame) -> np.ndarray:
-        """Risk Parity optimizasyonu"""
+    def risk_parity_optimization(self, returns: Union[pd.DataFrame, pl.DataFrame]) -> np.ndarray:
+        """Risk Parity optimizasyonu - Polars uyumlu"""
         try:
-            cov_matrix = returns.cov() * 252
+            if isinstance(returns, pl.DataFrame):
+                cov_matrix = returns.select(pl.all().exclude("date")).cov() * 252 if "date" in returns.columns else returns.cov() * 252
+                cov_matrix_np = cov_matrix.to_numpy()
+                symbols = [col for col in returns.columns if col != "date"]
+            else:
+                cov_matrix_np = returns.cov().values * 252
+                symbols = returns.columns.tolist()
             
             def risk_parity_objective(weights, cov_matrix):
                 portfolio_risk = np.sqrt(weights.T @ cov_matrix @ weights)
@@ -279,16 +320,16 @@ class PortfolioAllocationModule(BaseAnalysisModule):
             
             # Bounds
             max_alloc = self.parameters.get("constraints", {}).get("max_allocation_per_asset", 0.3)
-            bounds = [(0, max_alloc) for _ in range(len(returns.columns))]
+            bounds = [(0, max_alloc) for _ in range(len(symbols))]
             
             # Initial guess (equal weight)
-            x0 = np.array([1.0 / len(returns.columns)] * len(returns.columns))
+            x0 = np.array([1.0 / len(symbols)] * len(symbols))
             
             # Optimization
             result = minimize(
                 risk_parity_objective,
                 x0,
-                args=(cov_matrix.values,),
+                args=(cov_matrix_np,),
                 method='SLSQP',
                 bounds=bounds,
                 constraints=constraints,
@@ -299,7 +340,7 @@ class PortfolioAllocationModule(BaseAnalysisModule):
             
         except Exception as e:
             logger.error(f"Risk parity optimization failed: {e}")
-            return self._equal_weight_allocation(returns.shape[1])
+            return self._equal_weight_allocation(len(symbols))
     
     def _hrp_allocation(self, cov_matrix: np.ndarray, linkage_matrix: np.ndarray) -> np.ndarray:
         """HRP allocation implementation"""
@@ -331,12 +372,15 @@ class PortfolioAllocationModule(BaseAnalysisModule):
         else:
             return np.ones(len(symbols)) / len(symbols)
     
-    def _generate_views(self, returns: pd.DataFrame) -> Tuple[np.ndarray, np.ndarray]:
+    def _generate_views(self, returns: Union[pd.DataFrame, pl.DataFrame], symbols: List[str]) -> Tuple[np.ndarray, np.ndarray]:
         """Basit trend-based views oluştur"""
-        recent_returns = returns.tail(20).mean()
+        if isinstance(returns, pl.DataFrame):
+            recent_returns = returns.tail(20).select(pl.all().exclude("date")).mean().to_numpy() if "date" in returns.columns else returns.tail(20).mean().to_numpy()
+        else:
+            recent_returns = returns.tail(20).mean().values
         
-        P = np.eye(len(returns.columns))
-        Q = recent_returns.values * 0.1
+        P = np.eye(len(symbols))
+        Q = recent_returns * 0.1
         
         return P, Q
     
@@ -385,7 +429,7 @@ class PortfolioAllocationModule(BaseAnalysisModule):
         return np.ones(num_assets) / num_assets
     
     async def compute_metrics(self, symbols: List[str]) -> Dict[str, Any]:
-        """Portföy metriklerini hesapla - ANALYSIS_HELPERS UYUMLU"""
+        """Portföy metriklerini hesapla - ANALYSIS_HELPERS UYUMLU + Polars"""
         try:
             # Historical prices
             lookback = self.parameters.get("data", {}).get("lookback_period", 252)
@@ -393,7 +437,10 @@ class PortfolioAllocationModule(BaseAnalysisModule):
             
             prices = await self.get_historical_prices(symbols, lookback)
             
-            if prices.empty or len(prices) < min_data_points:
+            if prices.is_empty() if isinstance(prices, pl.DataFrame) else prices.empty:
+                raise ValueError("Insufficient price data for portfolio analysis")
+            
+            if (len(prices) if isinstance(prices, pl.DataFrame) else len(prices)) < min_data_points:
                 raise ValueError("Insufficient price data for portfolio analysis")
             
             # Calculate returns
@@ -575,7 +622,7 @@ class PortfolioAllocationModule(BaseAnalysisModule):
     
     async def run(self, symbols: List[str], priority: str = "normal") -> Dict[str, Any]:
         """
-        Main execution method - ANALYSIS_HELPERS UYUMLU
+        Main execution method - ANALYSIS_HELPERS UYUMLU + Polars
         """
         try:
             results = await self.compute_metrics(symbols)
@@ -589,14 +636,61 @@ class PortfolioAllocationModule(BaseAnalysisModule):
         return {
             "module_name": self.module_name,
             "version": self.version,
-            "description": "Portfolio optimization and asset allocation",
+            "description": "Portfolio optimization and asset allocation (Polars compatible)",
             "optimization_methods": list(self.parameters.get("optimization_methods", {}).keys()),
             "metrics": list(self.weights.keys()),
+            "dataframe_type": self.dataframe_type,
             "parallel_mode": "batch",
             "lifecycle": "development",
             "analysis_helpers_compatible": True,
             "supports_multiple_assets": True
         }
+
+# Multi-User Async Desteği
+# analysis/port_alloc_multi.py (opsiyonel - mevcut dosyaya eklenebilir)
+"""
+Multi-user async support for portfolio allocation
+"""
+
+import asyncio
+from typing import Dict, List, Any
+from contextlib import asynccontextmanager
+
+class PortfolioAllocationManager:
+    """Multi-user portfolio allocation manager"""
+    
+    def __init__(self, max_concurrent_users: int = 10):
+        self.max_concurrent_users = max_concurrent_users
+        self.semaphore = asyncio.Semaphore(max_concurrent_users)
+        self.user_sessions: Dict[str, PortfolioAllocationModule] = {}
+    
+    @asynccontextmanager
+    async def get_user_session(self, user_id: str, config: Dict = None):
+        """User session management with context manager"""
+        try:
+            await self.semaphore.acquire()
+            
+            if user_id not in self.user_sessions:
+                self.user_sessions[user_id] = PortfolioAllocationModule(config)
+            
+            yield self.user_sessions[user_id]
+            
+        finally:
+            self.semaphore.release()
+    
+    async def allocate_for_user(self, user_id: str, symbols: List[str], config: Dict = None) -> Dict[str, Any]:
+        """User-specific portfolio allocation"""
+        async with self.get_user_session(user_id, config) as session:
+            return await session.run(symbols)
+
+# Global manager instance
+portfolio_manager = PortfolioAllocationManager()
+
+# Multi-user async function
+async def allocate_portfolio_multi_user(user_id: str, symbols: List[str], config: Dict = None) -> Dict:
+    """Multi-user portfolio allocation endpoint"""
+    return await portfolio_manager.allocate_for_user(user_id, symbols, config)
+
 
 # Factory pattern için
 class PortfolioAllocationFactory:

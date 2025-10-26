@@ -1,5 +1,7 @@
 # analysis/config/c_corr.py
 """
+c_corr.py
+Version: 1.2.0
 Korelasyon & Lead-Lag Analiz Modülü Config - Polars Uyumlu
 
 Pydantic model for type safety and validation.

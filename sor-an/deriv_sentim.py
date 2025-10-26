@@ -1,5 +1,7 @@
 # analysis/deriv_sentim.py
 """
+analysis/deriv_sentim.py
+Version: 2.0.0 - Tam Async & Analysis Helpers Uyumlu
 Derivatives & Sentiment Analysis Module
 Futures piyasası pozisyon verilerine dayalı trader sentiment analizi
 
@@ -8,17 +10,7 @@ Metrikler:
 - Gelişmiş: OI Change Rate, Funding Rate Skew, Volume Imbalance Index
 - Profesyonel: Liquidation Heatmap, OI Delta Divergence, Volatility Skew
 
-Amaç: Trader positioning & sentiment eğilimi
-Çıktı: Sentiment Score (-1 → 1)
-
-Updated to use Pydantic models and analysis_helpers compatibility.
-analysis/analysis_helpers.py ile uyumlu
-"""
-
-# analysis/deriv_sentim.py
-"""
-Derivatives & Sentiment Analysis Module
-Analysis Helpers Uyumlu Versiyon
+Tam Async, Multi-User uyumlu, Analysis Helpers entegrasyonlu
 """
 
 import numpy as np
@@ -30,7 +22,7 @@ import logging
 import time
 
 from analysis.analysis_base_module import BaseAnalysisModule, legacy_compatible
-from analysis.analysis_helpers import AnalysisOutput, AnalysisHelpers
+from analysis.analysis_helpers import AnalysisOutput, AnalysisHelpers, AnalysisUtilities
 from utils.binance_api.binance_a import BinanceAggregator
 from analysis.config.c_deriv import DerivSentimentConfig, CONFIG
 
@@ -54,7 +46,7 @@ class SentimentComponents:
 class DerivativesSentimentModule(BaseAnalysisModule):
     """
     Futures pozisyon verilerine dayalı sentiment analiz modülü
-    Analysis Helpers uyumlu standart analiz modülü
+    Tam Async, Multi-User uyumlu, Analysis Helpers entegrasyonlu
     """
     
     def __init__(self, config: Dict[str, Any] = None):
@@ -65,6 +57,10 @@ class DerivativesSentimentModule(BaseAnalysisModule):
         self.module_name = "derivatives_sentiment"
         self.version = "2.0.0"
         self.dependencies = ["binance_api"]
+        
+        # ✅ ANALYSIS HELPERS INTEGRATION
+        self.helpers = AnalysisHelpers()
+        self.utils = AnalysisUtilities()
         
         # ✅ WEIGHTS VE THRESHOLDS
         self.weights = self.cfg.weights
@@ -83,7 +79,7 @@ class DerivativesSentimentModule(BaseAnalysisModule):
         self._cache_ttl = getattr(self.cfg.parameters, "cache_ttl", 300)
         
         # Normalize weights
-        self.normalized_weights = self.helpers.normalize_weights(self.cfg.weights)
+        self.normalized_weights = self.utils.normalize_weights(self.cfg.weights)
         
         logger.info(f"DerivativesSentimentModule initialized: {self.module_name} v{self.version}")
 
@@ -94,10 +90,10 @@ class DerivativesSentimentModule(BaseAnalysisModule):
 
     async def compute_metrics(self, symbol: str, priority: Optional[str] = None) -> Dict[str, Any]:
         """
-        ✅ ANALYSIS_HELPERS UYUMLU ANA METOT
+        ✅ TAM ASYNC & ANALYSIS_HELPERS UYUMLU ANA METOT
         Tüm sentiment metriklerini hesapla ve standart AnalysisOutput döndür
         """
-        start_time = AnalysisHelpers.get_timestamp()
+        start_time = self.helpers.get_timestamp()
         
         try:
             # Verileri paralel olarak getir
@@ -130,32 +126,37 @@ class DerivativesSentimentModule(BaseAnalysisModule):
             # Confidence hesapla
             confidence = self._calculate_confidence(components, calculated_components)
             
-            # ✅ STANDART OUTPUT ŞABLONU
-            output = self._create_output_template()
-            output.update({
+            # ✅ STANDART OUTPUT ŞABLONU - AnalysisOutput modeli kullan
+            output_data = {
                 "score": self._normalize_score(score),
                 "signal": signal,
                 "confidence": confidence,
                 "components": calculated_components,
                 "explain": explanation,
+                "timestamp": self.helpers.get_timestamp(),
+                "module": self.module_name,
                 "metadata": {
                     "symbol": symbol,
                     "priority": priority,
-                    "calculation_time": AnalysisHelpers.get_timestamp() - start_time,
+                    "calculation_time": self.helpers.get_timestamp() - start_time,
                     "data_sources": len([d for d in [funding_data, oi_data, ls_data, liq_data, taker_data] if not d.empty])
                 }
-            })
+            }
             
-            # ✅ OUTPUT VALIDATION
-            if not self._validate_output(output):
-                return self._create_fallback_output("Output validation failed")
+            # ✅ ANALYSISOUTPUT VALIDATION
+            try:
+                validated_output = AnalysisOutput(**output_data)
+                output_dict = validated_output.dict()
+            except ValidationError as e:
+                logger.warning(f"Output validation failed: {e}, using fallback")
+                return self._create_fallback_output(f"Validation error: {e}")
             
-            self._record_execution(AnalysisHelpers.get_timestamp() - start_time, True)
-            return output
+            self._record_execution(self.helpers.get_timestamp() - start_time, True)
+            return output_dict
             
         except Exception as e:
             logger.error(f"Compute metrics failed for {symbol}: {e}")
-            self._record_execution(AnalysisHelpers.get_timestamp() - start_time, False)
+            self._record_execution(self.helpers.get_timestamp() - start_time, False)
             return self._create_fallback_output(str(e))
     
     async def _calculate_components(self, symbol: str, funding_data: pd.DataFrame, 
@@ -210,12 +211,12 @@ class DerivativesSentimentModule(BaseAnalysisModule):
             "volatility_skew": components.volatility_skew
         }
         
-        # Ağırlıklı ortalama hesapla (AnalysisHelpers kullanarak)
-        weighted_sum = self._calculate_weighted_score(components_dict, self.normalized_weights)
+        # Ağırlıklı ortalama hesapla (AnalysisUtilities kullanarak)
+        weighted_score = self.utils.calculate_weighted_average(components_dict, self.normalized_weights)
         
         # Normalizasyon (-1 ile 1 arası) ve 0-1 aralığına dönüştürme
         scale_factor = getattr(self.cfg.normalization, "scale_factor", 3.0)
-        sentiment_score_raw = np.tanh(weighted_sum * scale_factor)
+        sentiment_score_raw = np.tanh(weighted_score * scale_factor)
         sentiment_score = (sentiment_score_raw + 1) / 2  # Convert -1..1 to 0..1
         
         # Sinyal belirleme
@@ -229,11 +230,11 @@ class DerivativesSentimentModule(BaseAnalysisModule):
     def _get_sentiment_signal(self, score: float) -> str:
         """Skora göre sinyal belirle"""
         if score >= self.thresholds["extreme_bull"]:
-            return "bullish"
+            return "extreme_bull"
         elif score >= self.thresholds["bullish"]:
             return "bullish"
         elif score <= self.thresholds["extreme_bear"]:
-            return "bearish"
+            return "extreme_bear"
         elif score <= self.thresholds["bearish"]:
             return "bearish"
         else:
@@ -290,7 +291,42 @@ class DerivativesSentimentModule(BaseAnalysisModule):
         if not explanations:
             explanations.append("Piyasa dengeli seyirde")
         
-        return f"Derivatives Sentiment {signal.upper()} - " + ". ".join(explanations)
+        signal_display = signal.upper().replace('_', ' ')
+        return f"Derivatives Sentiment {signal_display} - " + ". ".join(explanations)
+    
+    # ✅ EKSİK METODLAR - ANALYSIS HELPERS UYUMLU
+    def _normalize_score(self, score: float) -> float:
+        """Skoru normalize et"""
+        return self.utils.normalize_score(score)
+    
+    def _calculate_weighted_score(self, scores: Dict[str, float], weights: Dict[str, float]) -> float:
+        """Ağırlıklı skor hesapla"""
+        return self.utils.calculate_weighted_average(scores, weights)
+    
+    def _validate_output(self, output: Dict[str, Any]) -> bool:
+        """Output validasyonu"""
+        return self.utils.validate_output(output)
+    
+    def _create_output_template(self) -> Dict[str, Any]:
+        """Standart output şablonu oluştur"""
+        return {
+            "score": 0.5,
+            "signal": "neutral",
+            "confidence": 0.0,
+            "components": {},
+            "explain": "",
+            "timestamp": self.helpers.get_timestamp(),
+            "module": self.module_name
+        }
+    
+    def _create_fallback_output(self, reason: str) -> Dict[str, Any]:
+        """Fallback output oluştur"""
+        return self.utils.create_fallback_output(self.module_name, reason)
+    
+    def _record_execution(self, duration: float, success: bool = True):
+        """Performans metriklerini kaydet"""
+        self.helpers.update_performance_metrics(f"{self.module_name}_duration", duration)
+        self.helpers.update_performance_metrics(f"{self.module_name}_success", 1.0 if success else 0.0)
     
     # METRİK HESAPLAMA FONKSİYONLARI
     
@@ -532,7 +568,7 @@ class DerivativesSentimentModule(BaseAnalysisModule):
             "symbol": symbol,
             "aggregated_score": self._normalize_score(np.mean(list(metrics.values()))),
             "component_scores": metrics,
-            "timestamp": AnalysisHelpers.get_timestamp(),
+            "timestamp": self.helpers.get_timestamp(),
             "module": self.module_name
         }
 
@@ -545,14 +581,10 @@ class DerivativesSentimentModule(BaseAnalysisModule):
             "status": "operational",
             "performance": perf_metrics,
             "dependencies": self.dependencies,
-            "timestamp": AnalysisHelpers.get_timestamp(),
+            "timestamp": self.helpers.get_timestamp(),
             "report_type": "derivatives_sentiment_report",
             "cache_size": len(self._cache)
         }
-
-    def _create_fallback_output(self, reason: str) -> Dict[str, Any]:
-        """Fallback output oluştur"""
-        return self.helpers.create_fallback_output(self.module_name, reason)
 
     async def cleanup(self):
         """Kaynakları temizle"""
@@ -570,6 +602,7 @@ def create_module(config: Dict[str, Any] = None) -> DerivativesSentimentModule:
 if __name__ == "__main__":
     async def demo():
         module = DerivativesSentimentModule()
+        await module.initialize()
         result = await module.compute_metrics("BTCUSDT")
         
         print("=== Derivatives Sentiment Module Demo ===")
@@ -581,5 +614,7 @@ if __name__ == "__main__":
         print("Components:")
         for k, v in result.get('components', {}).items():
             print(f"  {k}: {v:.4f}")
+        
+        await module.cleanup()
 
     asyncio.run(demo())

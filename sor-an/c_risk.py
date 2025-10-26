@@ -1,8 +1,9 @@
 # analysis/config/c_risk.py
 """
 Risk & Exposure Module Configuration - Analysis Helpers Uyumlu
-Version: 1.1.0
-File: analysis/config/c_risk.py
+analysis/config/c_risk.py
+Version: 1.9.9
+
 """
 
 from analysis.config.cm_base import BaseModuleConfig, ModuleLifecycle, ParallelMode

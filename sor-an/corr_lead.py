@@ -1,5 +1,7 @@
 # analysis/corr_lead.py
 """
+corr_lead.py
+Version: 1.2.0
 Korelasyon & Lead-Lag (Liderlik Analizi) Modülü
 Modül: corr_lead.py
 Config: c_corr.py

@@ -1,5 +1,8 @@
 # analysis/config/c_onchain.py
 """
+analysis/config/c_onchain.py
+Version: 1.0.0
+
 On-Chain Analysis Configuration
 Pydantic model for configuration validation and type safety
 analysis/analysis_helpers.py ile uyumlu
