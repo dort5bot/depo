@@ -1,0 +1,195 @@
+# Bileşik Skor Konfigürasyonu
+# analysis/composite/composite_config.yaml
+# Composite Engine ile Tam Uyumlu Konfigürasyon
+
+
+composite_scores:
+  trend_strength:
+    description: "Trend yönü ve momentum gücü ölçümü"
+    modules:
+      - trend_moment
+      - regime_anomal
+      - deriv_sentim
+      - order_micros
+    weights:
+      trend_moment: 0.35
+      regime_anomal: 0.25
+      deriv_sentim: 0.20
+      order_micros: 0.20
+    thresholds:
+      strong_bullish: 0.7
+      weak_bullish: 0.55
+      neutral: 0.45
+      weak_bearish: 0.3
+      strong_bearish: 0.1
+
+  risk_exposure:
+    description: "Pozisyon risk seviyesi ölçümü"
+    modules:
+      - regime_anomal
+      - onchain
+      - risk_expos
+    weights:
+      regime_anomal: 0.40
+      onchain: 0.30
+      risk_expos: 0.30
+    thresholds:
+      low_risk: 0.3
+      medium_risk: 0.5
+      high_risk: 0.7
+
+  buy_opportunity:
+    description: "Alım fırsatı skoru"
+    modules:
+      - trend_moment
+      - deriv_sentim
+      - order_micros
+      - corr_lead
+    weights:
+      trend_moment: 0.30
+      deriv_sentim: 0.25
+      order_micros: 0.25
+      corr_lead: 0.20
+    thresholds:
+      strong_buy: 0.7
+      good_buy: 0.6
+      fair_buy: 0.55
+      poor_buy: 0.4
+
+  liquidity_pressure:
+    description: "Gerçek zamanlı likidite ve hacim baskısı ölçümü"
+    modules:
+      - order_micros
+      - microalpha
+    weights:
+      order_micros: 0.60
+      microalpha: 0.40
+    thresholds:
+      strong_buying_pressure: 0.7
+      moderate_buying_pressure: 0.6
+      low_liquidity: 0.3
+
+  # ✅ DÜZELTİLDİ: anomaly_detection -> anomaly_detection
+  anomaly_detection:
+    description: "Ani değişim ve anomali tespit sistemi"
+    modules:
+      - regime_anomal
+      - deriv_sentim
+      - risk_expos
+    weights:
+      regime_anomal: 0.40
+      deriv_sentim: 0.30
+      risk_expos: 0.30
+    thresholds:
+      critical_anomaly: 0.8
+      high_anomaly: 0.7
+      medium_anomaly: 0.6
+      low_anomaly: 0.5
+
+  market_health:
+    description: "Genel piyasa sağlık durumu ölçümü"
+    modules:
+      - trend_moment
+      - risk_expos
+      - order_micros
+      - deriv_sentim
+    weights:
+      trend_moment: 0.30
+      risk_expos: 0.25
+      order_micros: 0.25
+      deriv_sentim: 0.20
+    thresholds:
+      optimal_health: 0.75
+      good_health: 0.65
+      moderate_health: 0.55
+      caution_zone: 0.45
+      poor_health: 0.35
+
+  swing_trading:
+    description: "1-7 günlük swing trade sinyalleri"
+    modules:
+      - trend_moment
+      - deriv_sentim
+      - risk_expos
+    weights:
+      trend_moment: 0.40
+      deriv_sentim: 0.30
+      risk_expos: 0.30
+    thresholds:
+      strong_buy: 0.7
+      buy: 0.6
+      strong_sell: 0.3
+      sell: 0.4
+
+  # ✅ YENİ EKLENDİ: composite_strategies.py'deki yeni stratejiler
+  buy_score:
+    description: "Alınabilirlik (BuyScore) skoru"
+    modules:
+      - trend_moment
+      - risk_expos
+      - liquidity_pressure
+      - market_health
+      - buy_opportunity
+    weights:
+      trend_moment: 0.35
+      risk_expos: 0.25
+      liquidity_pressure: 0.15
+      market_health: 0.15
+      buy_opportunity: 0.10
+    thresholds:
+      excellent_buy: 0.75
+      good_buy: 0.65
+      fair_buy: 0.55
+      poor_buy: 0.45
+
+  capital_flow:
+    description: "Coin bazlı net para akışı tespiti"
+    modules:
+      - onchain
+      - liquidity_pressure
+      - market_health
+      - deriv_sentim
+      - risk_expos
+    weights:
+      onchain: 0.35
+      liquidity_pressure: 0.30
+      market_health: 0.20
+      deriv_sentim: 0.10
+      risk_expos: -0.15
+    thresholds:
+      strong_inflow: 0.7
+      moderate_inflow: 0.6
+      weak_inflow: 0.55
+      weak_outflow: 0.45
+      moderate_outflow: 0.4
+      strong_outflow: 0.3
+
+  market_cash_flow:
+    description: "Piyasa seviyesinde nakit akışı (Stable->Risk)"
+    modules:
+      - market_health
+      - liquidity_pressure
+      - onchain
+      - deriv_sentim
+      - risk_expos
+    weights:
+      market_health: 0.30
+      liquidity_pressure: 0.25
+      onchain: 0.25
+      deriv_sentim: 0.10
+      risk_expos: -0.15
+    thresholds:
+      strong_risk_on: 0.75
+      moderate_risk_on: 0.65
+      weak_risk_on: 0.55
+      weak_risk_off: 0.45
+      moderate_risk_off: 0.35
+      strong_risk_off: 0.25
+
+# Global Ayarlar
+engine_settings:
+  performance_tracking: true
+  alert_system: true
+  fallback_mechanism: true
+  max_calculation_time: 5.0
+  min_confidence_threshold: 0.7
