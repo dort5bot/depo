@@ -13,7 +13,7 @@ veri modelinde, tam async, multi user yapı da mı, değilse gerekli kodları ve
 analysis_helpers.py ile tam uyumlu, gereken tam kodları ver"
 "
 
-4 order_micros.py  + c_order.py  eklenen dosya (tam kod ve config):  →  Numpy  
+♦️4 order_micros.py  + c_order.py  eklenen dosya (tam kod ve config):  →  Numpy  
 veri modelinde, tam async, multi user yapı da mı, değilse gerekli kodları ver, isimlendirmeleri koru örnek: compute_metrics > compute_metrics olmalı
 analysis_helpers.py ile tam uyumlu, gereken tam kodları ver"
 "
@@ -28,12 +28,12 @@ veri modelinde, tam async, multi user yapı da mı, değilse gerekli kodları ve
 analysis_helpers.py ile tam uyumlu, gereken tam kodları ver"
 "
 
-7 risk_expos.py  + c_risk.py  eklenen dosya (tam kod ve config):  →  Polars  
+♦️7 risk_expos.py  + c_risk.py  eklenen dosya (tam kod ve config):  →  Polars  
 veri modelinde, tam async, multi user yapı da mı, değilse gerekli kodları ver, isimlendirmeleri koru örnek: compute_metrics > compute_metrics olmalı
 analysis_helpers.py ile tam uyumlu, gereken tam kodları ver"
 "
 
-8 microalpha.py  + c_micro.py  eklenen dosya (tam kod ve config):  →  Numpy  
+♦️8 microalpha.py  + c_micro.py  eklenen dosya (tam kod ve config):  →  Numpy  
 veri modelinde, tam async, multi user yapı da mı, değilse gerekli kodları ver, isimlendirmeleri koru örnek: compute_metrics > compute_metrics olmalı
 analysis_helpers.py ile tam uyumlu, gereken tam kodları ver"
 "
