@@ -1,9 +1,9 @@
-1 trend_moment.py  + c_trend.py  eklenen dosya (tam kod ve config):  →  Polars  
+♦️1 trend_moment.py  + c_trend.py  eklenen dosya (tam kod ve config):  →  Polars  
 veri modelinde, tam async, multi user yapı da mı, değilse gerekli kodları ver, isimlendirmeleri koru örnek: compute_metrics > compute_metrics olmalı
 analysis_helpers.py ile tam uyumlu, gereken tam kodları ver"
 "
 
-2 volat_regime.py  + c_volat.py  eklenen dosya (tam kod ve config):  →  Polars  
+♦️2 volat_regime.py  + c_volat.py  eklenen dosya (tam kod ve config):  →  Polars  
 veri modelinde, tam async, multi user yapı da mı, değilse gerekli kodları ver, isimlendirmeleri koru örnek: compute_metrics > compute_metrics olmalı
 analysis_helpers.py ile tam uyumlu, gereken tam kodları ver"
 "
@@ -18,7 +18,7 @@ veri modelinde, tam async, multi user yapı da mı, değilse gerekli kodları ve
 analysis_helpers.py ile tam uyumlu, gereken tam kodları ver"
 "
 
-5 corr_lead.py  + c_corr.py  eklenen dosya (tam kod ve config):  →  Polars  
+♦️5 corr_lead.py  + c_corr.py  eklenen dosya (tam kod ve config):  →  Polars  
 veri modelinde, tam async, multi user yapı da mı, değilse gerekli kodları ver, isimlendirmeleri koru örnek: compute_metrics > compute_metrics olmalı
 analysis_helpers.py ile tam uyumlu, gereken tam kodları ver"
 "
