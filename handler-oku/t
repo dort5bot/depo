@@ -127,12 +127,34 @@ Lead–Lag (BTC): 3 bar | corr=0.78
 
 ---
 
-## ✅ Geliştirme İçin Öneri:
+## ✅ performans test--
 
-Eğer bu raporları daha okunabilir hale getirmek istersen:
+@router.message(Command("agg_status"))
+async def cmd_agg_status(message: Message):
+    """
+    /agg_status
+    -> Aggregator'ın health & performance bilgilerini döner.
+    """
+    agg: AnalysisAggregator = await get_aggregator()
+    try:
+        healthy, details = await agg.comprehensive_health_check()
+        perf = agg.get_performance_metrics()
+        lines = [f"✅ Aggregator health: {'OK' if healthy else 'PROBLEM'}"]
+        for k, v in details.items():
+            lines.append(f"• {k}: {v}")
+        lines.append("Performance:")
+        lines.append(f"• total_executions: {perf.get('total_executions')}")
+        lines.append(f"• avg_exec_time: {perf.get('average_execution_time'):.3f}s")
+        lines.append(f"• cache_hits: {perf.get('cache_hits')}  cache_misses: {perf.get('cache_misses')}")
+        await message.answer("\n".join(lines))
+    except Exception as e:
+        logger.exception("agg_status error: %s", e)
+        await message.answer(f"❌ Aggregator status alınamadı: {e}")
 
-* Markdown formatı kullanarak kalın, italik, emoji vurguları artırılabilir.
-* `tabulate` ya da `pandas.DataFrame.to_string()` gibi yöntemlerle tablo haline getirilebilir.
-* Çok uzun mesajlar için Telegram "media group" veya "file upload" da düşünülebilir.
+# Extra: simple ping command in this router (useful for health checks)
+@router.message(Command("analysis_ping"))
+async def cmd_ping(message: Message):
+    await message.answer("pong — analysis handler alive ✅")
 
-İstersen bu raporları `.txt`, `.csv` veya görsel tablo olarak export etmen için kodu güncelleyebilirim.
+
+
