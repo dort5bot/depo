@@ -1,0 +1,134 @@
+# ✅ analysis/schemas/module_registry.yaml
+# required_params EKLEMEYİN - gereksiz!
+# ✅ DOĞRU - b_map_*.yaml'daki endpoint NAME kullan	
+#	klines:                    # <--- ENDPOINT NAME
+#	  base: spot
+#	  path: /api/v3/klines     # <--- Gerçek path burada
+#	  method: klines
+
+
+meta:
+  version: "2025.1"
+  description: "MAPS Framework - Standardized Composite Metrics"
+  updated: "2025-10-28"
+  score_standard: "[-1, 1]"
+  performance_guide:
+    high_intensity: "Use process pool"
+    medium_intensity: "Use thread pool" 
+    low_intensity: "Use async"
+
+# 🔥 Performance profilleri
+performance_profiles:
+  high_intensity:
+    max_workers: "cpu_count * 2"
+    memory_limit: "1GB"
+    timeout: 60
+    execution_strategy: "process_pool"
+  medium_intensity:
+    max_workers: "cpu_count"
+    memory_limit: "512MB"
+    timeout: 30
+    execution_strategy: "thread_pool"
+  low_intensity:
+    max_workers: "cpu_count // 2"
+    memory_limit: "256MB"
+    timeout: 10
+    execution_strategy: "async"
+
+
+
+modules:
+  - name: "trend_analyzer"
+    multi_user: true
+    data_source: "utils/binance_api/binance_a.BinanceAggregator"
+    api_type: "public"
+    endpoint: "klines"  # 🔥 YENİ: Hangi endpoint kullanılacak?
+    job_type: "metric_calculation"
+    parallel_mode: "async"
+    data_model: "pandas"
+    compute_intensity: "medium"
+    metrics:
+      trend: ["EMA", "SMA", "MACD", "RSI", "ADX"]
+      momentum: ["Bollinger_Bands", "Historical_Volatility"]
+
+  - name: "volatility_analyzer"
+    multi_user: true
+    data_source: "utils/binance_api/binance_a.BinanceAggregator"
+    api_type: "public"
+    endpoint:
+    job_type: "metric_calculation"
+    parallel_mode: "async"
+    data_model: "numpy"
+    compute_intensity: "high"
+    metrics:
+      volatility: ["ATR", "GARCH_1_1", "Hurst_Exponent", "Entropy_Index"]
+      risk: ["VaR", "CVaR", "Max_Drawdown"]
+
+  - name: "sentiment_analyzer"
+    multi_user: true
+    data_source: "utils/binance_api/binance_a.BinanceAggregator"
+    api_type: "public"
+    endpoint: "funding_rate_history"
+    job_type: "metric_calculation"
+    parallel_mode: "async"
+    data_model: "pandas"
+    compute_intensity: "low"
+    metrics:
+      sentiment: ["Funding_Rate", "Open_Interest", "Long_Short_Ratio"]
+      derivatives: ["OI_Change_Rate", "Liquidation_Heat"]
+
+  - name: "microstructure_analyzer"
+    multi_user: true
+    data_source: "utils/binance_api/binance_a.BinanceAggregator"
+    api_type: "public"
+    endpoint:
+    job_type: "metric_calculation"
+    parallel_mode: "sync"  # Sıralı işlem gerekebilir
+    data_model: "numpy"
+    compute_intensity: "high"
+    metrics:
+      order_flow: ["OFI", "CVD", "Microprice_Deviation"]
+      liquidity: ["Market_Impact", "Depth_Elasticity"]
+
+  - name: "onchain_analyzer"
+    multi_user: false  # On-chain verileri user-specific değil
+    data_source: "utils/external_api/external_a.ExternalAggregator"
+    api_type: "public"
+    endpoint:
+    job_type: "metric_calculation"
+    parallel_mode: "async"
+    data_model: "polars"  # Büyük veri için Polars optimize
+    compute_intensity: "medium"
+    metrics:
+      flow: ["etf_net_flow", "exchange_netflow", "stablecoin_flow"]
+      valuation: ["nupl", "mvrv_zscore", "sopr"]
+
+  
+  # 🔥 COMPOSITE MODÜLÜ
+  - name: "composite_scorer"
+    multi_user: true
+    data_source: "internal"
+    api_type: "internal"
+    endpoint:
+    job_type: "composite_scoring"
+    parallel_mode: "async"
+    data_model: "pandas"
+    compute_intensity: "low"
+    timeout: 30 
+    retry_attempts: 2 
+    metrics:
+      trend_scores: ["Trend_Strength_Composite", "Momentum_Composite"]
+      market_regimes: ["Volatility_Composite", "Risk_Composite", "Market_Regime"]
+    composite_config:
+      score_range: "[-1, 1]"
+      interpretation:
+        "-1.0 to -0.6": "Strong Bearish/Low Risk"
+        "-0.6 to -0.3": "Moderate Bearish"
+        "-0.3 to 0.3": "Neutral"
+        "0.3 to 0.6": "Moderate Bullish"
+        "0.6 to 1.0": "Strong Bullish/High Risk"
+    performance_hints:  # YENİ
+      cache_ttl: 300
+      batch_size: 10
+      memory_mb: 50
+  
