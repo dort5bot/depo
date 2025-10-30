@@ -1,23 +1,39 @@
---SON HALİ---
+--analysis için handler çerçevesi--
 * buy/hodl/sel sinyali
-* BTC yada btc yazıldığında sonuç üretsin
+* BTC yada btc yazıldığında sonuç üretsin (Küçük-büyük fark etmesin, usdt eklenmeden sonuç üretebilsin)
 * raporlar usdt paritesine göre olsun, USDT göstermesin
 *
 
 Komut	Parametre	Anlam / Amaç	Açıklama
 -1- Genel görünüm
+Trend → Risk → Volatility → Sentiment sırasıyla öncelikli. Regime classification en kritik
 /t	(boş)	Genel görünüm (default)	default coin’in özet analizi
 /t <n>	örn: /t 20	Hacimli ilk n coin	Hacimli ilk n coin’in piyasa genel görünümü
 /t <sembol>	örn: /t bnb	Tek coin analizi	Belirtilen coin’in detaylı kompozit analizi
 
 -2-  Alım fırsatı raporu
-/tt	(boş)	Top Scan (default sayıda)	Varsayılan sayıda  en iyi alım fırsatlarını gösterir
-/tt <n>	örn: /tt 10	Top Scan n adet	n tane  en iyi alım fırsatlarını gösterir
+Özet: Alım fırsatı = Trend + Oversold + Low Risk + Positive Sentiment
+coin       trend    oversold  risk    sentiment  volume    SCORE   ACTION
+BTC        ↗ 0.68   ✅ 0.82   ↘ 0.32  ↗ 0.45     ↗ 1.2x    🟢 8.5  STRONG BUY
 
--3-
+/tb	(boş)	Top Scan (default sayıda)	Varsayılan sayıda  en iyi alım fırsatlarını gösterir
+/tb <n>	örn: /tt 10	Top Scan n adet	n tane  en iyi alım fırsatlarını gösterir
+
+-3- Market sağlığı
+Özet: Market sağlığı = Likidite akışı + Balina hareketleri + Risk göstergeleri + Pazar yapısı
 /tm	(boş)	Market Health	Genel piyasa sağlığı (MMI, ADI, SSP)
-/tp	(boş)	Top Performers	default sayıda En yüksek alım potansiyeline sahip coinler
-/tp <n>	/tp 20	Top Performers	20 tane En yüksek alım potansiyeline sahip coinler
+/tm <sembol>
+
+
+| Komut | İşlev                               | Öneri                                                                                                        |
+| ----- | ----------------------------------- | ------------------------------------------------------------------------------------------------------------ |
+| `/t`  | Genel görünüm veya tek coin analizi | ✅ “/t btc” → `composite_scorer` + `trend_analyzer` + `sentiment_enhanced` çıktıları birleştirilmeli          |
+| `/tb` | Top alım fırsatları (BUY SCAN)      | ✅ Trend, Oversold, Risk, Sentiment skorlarının **ağırlıklı ortalaması** ile sıralama yapılabilir             |
+| `/tm` | Market Health                       | ✅ “market_overview” ve “risk_analyzer” birleşimiyle global metrikler üretilebilir (ör. ADI, MMI, Vol Regime) |
+
+
+
+==================================================================
 /tf	(boş)	Capital Flow	Coin’lere giren/çıkan sermaye yönü (inflow/outflow)
 /tf <sembol>	örn: /tf btc	Capital Flow	belirtilen Coin’lere giren/çıkan sermaye yönü (inflow/outflow)
 /ta	(boş)	Anomaly / Alert Map	Piyasadaki fırsat ve anomalileri gösterir
