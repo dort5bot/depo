@@ -1,4 +1,9 @@
 --SON HALİ---
+* buy/hodl/sel sinyali
+* BTC yada btc yazıldığında sonuç üretsin
+* raporlar usdt paritesine göre olsun, USDT göstermesin
+*
+
 Komut	Parametre	Anlam / Amaç	Açıklama
 /t	(boş)	Genel görünüm (default)	default coin’in özet analizi
 /t <n>	örn: /t 20	Hacimli ilk n coin	Hacimli ilk n coin’in piyasa genel görünümü
@@ -125,7 +130,57 @@ Lead–Lag (BTC): 3 bar | corr=0.78
 | `/t BTC`   | Sadece BTC analizi (varsayılan 4 saat) |
 | `/t ETH 8` | ETH analizi, son 8 saatlik veri ile    |
 
+
 ---
+---
+---
+---
+---
+Özet: Trend → Risk → Volatility → Sentiment sırasıyla öncelikli. Regime classification en kritik! 
+2. KRİTİK METRİK GRUPLARI
+A. TREND & MOMENTUM (En Önemli)
+Trend_Strength_Composite → Ana trend yönü
+Momentum_Composite → Hareket gücü
+Market_Regime → Pazar rejimi
+
+B. RISK & VOLATILITY
+Volatility_Composite → Oynaklık seviyesi
+Risk_Composite → Risk durumu
+Max_Drawdown → Maksimum düşüş
+
+C. SENTIMENT & ON-CHAIN
+Funding_Rate → Türev piyasa sentiment
+OI_Change_Rate → Pozisyon değişimi
+exchange_netflow → Borsa akışları
+
+örnek:
+# Örnek çıktı:
+coin       trend    momentum  vola    risk    sentiment  regime        score
+BTC        ↗ 0.72   ↗ 0.68    ↗ 0.45  ↗ 0.38  ↘ -0.22   BULL_HIGH_VOL  ↗ 0.40
+ETH        ↗ 0.64   → 0.52    ↗ 0.51  ↗ 0.41   → 0.08   BULL_MED_VOL   ↗ 0.43
+BNB        → 0.31   ↘ -0.18   ↗ 0.62  ↗ 0.55  ↘ -0.35   NEUTRAL_HIGH_VOL → 0.19
+
+# Alarm Metrikleri:
+coin       liq_risk   vol_spike  sentiment  regime_change
+BTC        ↗ 0.68     ↗ 0.82     ↘ -0.45    ⚠️ HIGH_VOL
+ETH        → 0.41     ↗ 0.71     → 0.12     ✅ STABLE
+BNB        ↗ 0.75     ↗ 0.88     ↘ -0.62    🔥 BEAR_HIGH_VOL
+
+
+# Örnek: BTC Pozisyon Analizi
+BTC Metrics:
+trend: ↗ 0.72 (GÜÇLÜ BULL)
+momentum: ↗ 0.68 (YUKARI)
+volatility: ↗ 0.45 (ORTA)
+risk: ↗ 0.38 (DÜŞÜK RİSK)  
+sentiment: ↘ -0.22 (HAFİF BEAR)
+regime: BULL_HIGH_VOL
+
+📍 POZİSYON: STRONG BUY ✅
+---
+---
+---
+
 
 ## ✅ performans test--
 
