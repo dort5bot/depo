@@ -5,18 +5,26 @@
 *
 
 Komut	Parametre	Anlam / Amaç	Açıklama
+-1- Genel görünüm
 /t	(boş)	Genel görünüm (default)	default coin’in özet analizi
 /t <n>	örn: /t 20	Hacimli ilk n coin	Hacimli ilk n coin’in piyasa genel görünümü
 /t <sembol>	örn: /t bnb	Tek coin analizi	Belirtilen coin’in detaylı kompozit analizi
+
+-2-  Alım fırsatı raporu
 /tt	(boş)	Top Scan (default sayıda)	Varsayılan sayıda  en iyi alım fırsatlarını gösterir
 /tt <n>	örn: /tt 10	Top Scan n adet	n tane  en iyi alım fırsatlarını gösterir
-/tv
+
+-3-
 /tm	(boş)	Market Health	Genel piyasa sağlığı (MMI, ADI, SSP)
 /tp	(boş)	Top Performers	default sayıda En yüksek alım potansiyeline sahip coinler
 /tp <n>	/tp 20	Top Performers	20 tane En yüksek alım potansiyeline sahip coinler
 /tf	(boş)	Capital Flow	Coin’lere giren/çıkan sermaye yönü (inflow/outflow)
 /tf <sembol>	örn: /tf btc	Capital Flow	belirtilen Coin’lere giren/çıkan sermaye yönü (inflow/outflow)
 /ta	(boş)	Anomaly / Alert Map	Piyasadaki fırsat ve anomalileri gösterir
+
+
+-4-
+/tv
 
 
 +
