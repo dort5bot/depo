@@ -1,0 +1,114 @@
+# schemas/metrics_volatility.yaml
+metadata:
+  version: "1.0"
+  created_date: "2025-01-15"
+  description: "Volatility and regime detection metrics for MAPS analytical modules."
+  technical_name: "historical_volatility"  # ✅ snake_case
+  business_name: "Historical Volatility"   # ✅ PascalCase
+  category: "volatility"
+  author: "data_team"
+  status: "active"
+  
+metrics:
+  Historical_Volatility:
+    category: "volatility"
+    description: "Rolling standard deviation of log returns, optionally annualized."
+    formula: "HV = Std(Log(Returns)) * √252"
+    parameters:
+      - name: window
+        type: int
+        default: 30
+      - name: annualize
+        type: bool
+        default: true
+    input: "price_series"
+    output: "float_series"
+
+  ATR:
+    category: "volatility"
+    description: "Average True Range measures price range volatility."
+    formula: "ATR = MA(TR), TR = max(High-Low, |High-PrevClose|, |Low-PrevClose|)"
+    parameters:
+      - name: window
+        type: int
+        default: 14
+    input: "ohlc"
+    output: "float_series"
+
+  Bollinger_Width:
+    category: "volatility"
+    description: "Width of Bollinger Bands relative to mid-price."
+    formula: "Width = (Upper - Lower) / Middle"
+    parameters:
+      - name: window
+        type: int
+        default: 20
+      - name: num_std
+        type: float
+        default: 2.0
+    input: "price_series"
+    output: "float_series"
+
+  Variance_Ratio_Test:
+    category: "regime"
+    description: "Variance ratio test for mean reversion or random walk detection."
+    formula: "VR = Var(r_t, lag k) / (k * Var(r_t))"
+    parameters:
+      - name: lag
+        type: int
+        default: 10
+    input: "price_series"
+    output: "float_value"
+
+  Range_Expansion_Index:
+    category: "range_expansion"
+    description: "Measures price expansion or contraction."
+    formula: "REI = (Close - Avg(Close)) / (High - Low)"
+    parameters:
+      - name: window
+        type: int
+        default: 14
+    input: "ohlc"
+    output: "float_series"
+
+  Hurst_Exponent:
+    category: "fractal"
+    description: "Hurst exponent quantifies long-term memory or trend persistence."
+    formula: "H = slope(log(lag), log(std(diff(P_t, lag)))) * 2"
+    parameters:
+      - name: max_lag
+        type: int
+        default: 100
+    input: "price_series"
+    output: "float_value"
+
+  GARCH_1_1:
+    category: "volatility_model"
+    description: "Generalized Autoregressive Conditional Heteroskedasticity model (1,1)."
+    formula: "σ²_t = ω + αε²_{t-1} + βσ²_{t-1}"
+    parameters:
+      - name: omega
+        type: float
+        default: 0.000001
+      - name: alpha
+        type: float
+        default: 0.05
+      - name: beta
+        type: float
+        default: 0.9
+    input: "return_series"
+    output: "float_series"
+
+  Entropy_Index:
+    category: "entropy"
+    description: "Shannon entropy of return distribution within a rolling window."
+    formula: "Entropy = -Σ(p_i * log2(p_i))"
+    parameters:
+      - name: window
+        type: int
+        default: 100
+      - name: bins
+        type: int
+        default: 30
+    input: "price_series"
+    output: "float_series"

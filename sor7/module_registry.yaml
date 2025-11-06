@@ -1,0 +1,642 @@
+# ✅ analysis/schemas/module_registry.yaml
+# ---------------------------------------------
+# Yapı tek tip ve dict (dict (anahtar:değer))
+# snake_cas : trend_composite → Kod ve YAML, formula içeriği, module adı, composite_metric adı, YAML’daki anahtarlar, 
+# PascalCase: TrendComposite →  Formül açıklaması / UI / rapor
+#
+# ---------------------------------------------
+
+# required_params EKLEMEYİN - gereksiz!
+# ✅ DOĞRU - b_map_*.yaml'daki endpoint NAME kullan	
+#	klines:                    # <--- ENDPOINT NAME
+#	  base: spot
+#	  path: /api/v3/klines     # <--- Gerçek path burada
+#	  method: klines
+# output_type: "native"  # Internal işlemlerde native daha hızlı
+
+# ✅ analysis/schemas/module_registry.yaml
+# ✅ analysis/docs/naming_policy.yaml
+pattern_rules:
+  analyzer: ".*_analyzer$"
+  composite: ".*_composite$"
+  aggregator: ".*_aggregator$"
+  scan: ".*_scan$"  #yada scan: ".*_scan$"   # ✅ sadeleştirme
+
+naming_examples:
+  analyzer: "trend_analyzer"
+  composite: "core_composite"
+  aggregator: "signal_aggregator"
+  scan: "market_scan"
+
+
+handler_mapping:
+  general_overview: "core_composite"        
+  detailed_coin: "comprehensive_composite"  
+  buy_signal: "core_composite"              
+  market_health: "core_composite"             
+  capital_flow: "comprehensive_composite"  
+  risk_assessment: "risk_composite" 
+  regime_detection: "regime_composite"  
+  anomaly: null
+
+  
+
+# ===== META / SYSTEM CONFIG =====
+meta:
+  version: "2025.1"
+  metric_schema_version: "2.0"
+  description: "MAPS Framework - Standardized Composite Metrics"
+  updated: "2025-10-28"
+  score_standard: "[-1, 1]"
+  
+  
+  # 🆕 AKILLI DEFAULT SİSTEM
+  defaults:
+    endpoint_priority: "parallel" 
+    sequential_priority_modules: ["market_scan_analyzer", "heavy_data_analyzer"]  # 🆕 Sequential olacak modül isimleri
+    compute_intensity: "medium"   
+    parallel_mode: "async"          
+    normalize_weights: true
+
+    retry_policy:
+      max_attempts: 3
+      backoff: 2.0  
+      jitter: true           # Rastgele küçük varyasyon ekler
+      base_delay: 1.0        # İlk gecikme saniyesi
+      applicable_jobs: ["metric_calculation", "market_scan"]
+
+  error_handling:
+    invalid_data: "return_nan"
+    insufficient_periods: "return_nan" 
+    calculation_error: "return_nan"
+    timeout: "return_last_valid"
+
+
+# ===== PERFORMANCE CONFIG =====
+# 🔥 performance_profiles → execution_strategies
+performance_profiles:
+  high_intensity:
+    max_workers: "cpu_count * 2"
+    memory_limit: "1GB"
+    timeout: 60
+    execution_strategy: "process_pool"
+  medium_intensity:
+    max_workers: "cpu_count"
+    memory_limit: "512MB"
+    timeout: 30
+    execution_strategy: "thread_pool"
+  low_intensity:
+    max_workers: "cpu_count // 2"
+    memory_limit: "256MB"
+    timeout: 10
+    execution_strategy: "async"
+
+# 🔥 performance_hints → handler_configs
+performance_hints:
+  metric_standard_optimizations: 
+    pandas:
+      batch_size: 100
+      chunk_size: 1000
+      vectorized_operations: true
+    numpy:
+      batch_size: 50  
+      chunk_size: 500
+      use_gpu_if_available: true
+    polars:
+      batch_size: 200
+      chunk_size: 5000
+      streaming: true
+
+  #cache_ttl: 300
+  #batch_size: 10
+  #memory_mb: 50
+  endpoint_fallbacks:
+    funding_rate: "ticker_24hr"
+    liquidation_orders: "force_orders"
+    open_interest: "futures_ticker_24h"
+
+ # 🆕 Handler-specific configs
+  handler_configs:
+    signal_summary:
+      cache_ttl: 300
+      timeout: 30
+      fallback_strategy: "last_valid"
+      required_modules:
+      - "trend_analyzer"
+      - "volatility_analyzer"
+      - "core_composite"
+
+    market_health:
+      cache_ttl: 600
+      timeout: 45
+      fallback_strategy: "default"
+      required_modules:
+        - trend_analyzer
+        - sentiment_analyzer
+        - risk_analyzer
+      
+    top_symbols:
+      cache_ttl: 1800  # 30 dakika
+      timeout: 10
+      symbol_limit: 50
+
+
+# 🔥 metrics standard
+metric_standardization:
+  enabled: true
+  auto_type_mapping: true  # 🔥 data_model → input/output otomatik
+  default_min_periods: 5
+  default_fillna: true
+  default_timeout: 30
+  
+  # data_model bazlı AKILLI MAPPING
+  type_mapping:
+    pandas: 
+      input_type: "pandas"
+      output_type: "pandas"
+      performance: "medium"
+      cache_ttl: 300
+      decorator_config:  # 🆕 Decorator için özel ayarlar
+        min_periods: 10
+        fillna: true
+    numpy: 
+      input_type: "numpy"
+      output_type: "numpy" 
+      performance: "high"
+      cache_ttl: 600
+      decorator_config:
+        min_periods: 20  # 🆕 GARCH gibi metrikler için daha fazla period
+        fillna: false    # 🆕 Numpy'da fillna gerekmez
+      
+    polars: 
+      input_type: "polars"
+      output_type: "polars"
+      performance: "high"
+      cache_ttl: 900
+      decorator_config:
+        min_periods: 5
+        fillna: true
+  
+  # 🎯 SADECE GERÇEK İSTİSNALAR
+  overrides:
+    market_scan_analyzer:
+      output_type: "pandas"  # Diğer modüllerle entegrasyon için
+    #signal_aggregator:
+    #  input_type: "pandas"
+    #  output_type: "native"  
+   
+    
+      
+
+#==== MODÜL BAZLI CONFİG 
+# 🔧 ANALİZ/SINYAL ÜRETENLER: ham veri üretir. composite_metrics tarafından kullanılıp işlenebilir
+modules:    
+  trend_analyzer:
+    multi_user: true
+    data_source: "utils/binance_api/binance_a.BinanceAggregator"
+    api_type: "public"
+    endpoints: ["klines"]
+    job_type: "metric_calculation"
+    parallel_mode: "async"
+    data_model: "pandas"
+    compute_intensity: "medium"
+    metrics:
+      trend: ["EMA", "MACD", "RSI", "ADX"]
+
+  momentum_analyzer:
+    multi_user: true
+    data_source: "utils/binance_api/binance_a.BinanceAggregator"
+    api_type: "public"
+    endpoints: ["klines"]
+    job_type: "metric_calculation"
+    parallel_mode: "async"
+    data_model: "numpy"
+    compute_intensity: "medium"
+    metrics:
+      momentum: ["Rate_Of_Change", "Stochastic_Oscillator", "RSI"]
+
+
+  volatility_analyzer:
+    multi_user: true
+    data_source: "utils/binance_api/binance_a.BinanceAggregator"
+    api_type: "public"
+    endpoints: ["klines"]
+    job_type: "metric_calculation"
+    parallel_mode: "async"
+    data_model: "numpy"
+    compute_intensity: "high"
+    metrics:
+      volatility: ["ATR", "GARCH_1_1", "Hurst_Exponent", "Entropy_Index"]
+      risk: ["VaR", "CVaR", "Max_Drawdown"]
+
+  sentiment_analyzer:
+    multi_user: true
+    data_source: "utils/binance_api/binance_a.BinanceAggregator"
+    api_type: "public"
+    endpoints: ["funding_rate", "open_interest", "futures_ticker_24hr"]
+    job_type: "metric_calculation"
+    parallel_mode: "async"
+    data_model: "pandas"
+    compute_intensity: "low"
+    metrics:
+      sentiment: ["Funding_Rate", "Open_Interest", "Long_Short_Ratio"]
+      derivatives: ["OI_Change_Rate", "Liquidation_Heat"]
+
+  
+
+  market_scan_analyzer:
+    multi_user: true
+    data_source: "utils/binance_api/binance_a.BinanceAggregator"
+    api_type: "public"
+    endpoints: ["ticker_24hr_all","futures_ticker_24h"]
+    job_type: "market_scan"
+    parallel_mode: "async"
+    data_model: "pandas"  
+    compute_intensity: "medium"
+    metrics:
+      market_breadth: ["Advance_Decline", "Volume_Leadership", "Perf_Dispersion"]
+      regime_detection: ["trend_composite", "volatility_composite", "market_regime_composite"]
+    performance_hints:
+      cache_ttl: 60
+      batch_size: 50
+      memory_mb: 200
+
+
+  microstructure_analyzer:
+    multi_user: true
+    data_source: "utils/binance_api/binance_a.BinanceAggregator"
+    api_type: "public"
+    endpoints: ["order_book_depth"]
+    job_type: "metric_calculation"
+    parallel_mode: "sync"  # Sıralı işlem gerekebilir
+    data_model: "numpy"
+    compute_intensity: "high"
+    metrics:
+      order_flow: ["OFI", "CVD", "Microprice_Deviation"]
+      liquidity: ["Market_Impact", "Depth_Elasticity"]
+
+  onchain_analyzer:
+    multi_user: false  # On-chain verileri user-specific değil
+    data_source: "utils/external_api/external_a.ExternalAggregator"
+    api_type: "public"
+    endpoints: ["blockchain_metrics"]   # b_map_onchain.yaml’dan gerçek endpoint adı
+    job_type: "metric_calculation"
+    parallel_mode: "async"
+    data_model: "polars"  # Büyük veri için Polars optimize
+    compute_intensity: "medium"
+    metrics:
+      flow: ["etf_net_flow", "exchange_netflow", "stablecoin_flow"]
+      valuation: ["nupl", "mvrv_zscore", "sopr"]
+
+
+  risk_analyzer:
+    multi_user: true
+    data_source: "utils/binance_api/binance_a.BinanceAggregator"
+    api_type: "public"
+    endpoints: ["liquidation_orders", "force_orders", "futures_ticker_24hr"]
+    job_type: "risk_analysis"
+    parallel_mode: "async"
+    data_model: "pandas"
+    compute_intensity: "medium"
+    metrics:
+      liquidation_risk: ["Liquidation_Clusters", "Cascade_Risk", "Liquidation_Cascade"]
+      market_health: ["Market_Stress", "Forced_Selling", "Liquidity_Gaps"]
+      futures_risk: ["Futures_Liq_Risk", "SR_Impact"]
+
+  open_interest_analyzer:
+    multi_user: true
+    data_source: "utils/binance_api/binance_a.BinanceAggregator"
+    api_type: "public"
+    endpoints: ["open_interest","open_interest_hist"]
+    job_type: "metric_calculation"
+    parallel_mode: "async"
+    data_model: "pandas"
+    compute_intensity: "low"
+    metrics:
+      oi_analysis: ["OI_Growth_Rate", "OI_Price_Corr", "Position_Build"]
+    
+    
+  
+  
+  futures_market_analyzer:
+    multi_user: true
+    data_source: "utils/binance_api/binance_a.BinanceAggregator"
+    api_type: "public"
+    endpoints: ["futures_ticker_24hr", "funding_rate", "open_interest", "force_orders"]
+    job_type: "metric_calculation"
+    parallel_mode: "async"
+    data_model: "pandas"
+    compute_intensity: "medium"
+    metrics:
+      futures_momentum: ["Futures_ROC", "Futures_Volume"]
+      funding_analysis: ["Funding_Premium", "Funding_Momentum"]
+      risk_metrics: ["Futures_Liq_Risk", "OI_Trend"]
+
+  
+  
+  sentiment_plus_analyzer:     # Vadeli işlemler:(pozisyonlar, fonlama oranları, tasfiyeler vb.)
+    multi_user: true
+    data_source: "utils/binance_api/binance_a.BinanceAggregator"
+    api_type: "public"
+    endpoints: ["funding_rate", "open_interest", "long_short_account_ratio", "force_orders", "futures_ticker_24hr"]
+    job_type: "metric_calculation"
+    parallel_mode: "async"
+    data_model: "pandas"
+    compute_intensity: "medium"
+    metrics:
+      funding_sentiment: ["Funding_Trend", "Funding_Premium"]
+      positioning: ["OI_Momentum", "LS_Imbalance"]
+      risk_events: ["Liquidation_Cascade", "Market_Stress"]
+    composite_config:
+      score_components: ["funding_sentiment", "positioning", "risk_events"]
+      weights: [0.4, 0.4, 0.2]
+
+
+
+  correlation_analyzer:   # dönemsel ilişki analizi yapmak için
+    multi_user: true
+    data_source: "internal"
+    api_type: "internal"
+    endpoints: ["klines"]
+    job_type: "metric_calculation"
+    parallel_mode: "sync"
+    data_model: "pandas"
+    compute_intensity: "medium"
+    metrics:
+      correlation: ["Pearson_Corr", "Spearman_Corr", "Rolling_Corr"]
+      lead_lag: ["Granger_Causality", "Cross_Correlation", "Phase_Shift"]
+
+
+  advanced_signal_analyzer:
+    multi_user: true
+    data_source: "internal"
+    api_type: "internal"
+    endpoints: ["klines"]
+    job_type: "metric_calculation"
+    parallel_mode: "async"
+    data_model: "numpy"
+    compute_intensity: "high"
+    metrics:
+      signal_processing: ["kalman_filter_trend", "wavelet_transform", "hilbert_transform_slope"]
+      complexity: ["fractal_dimension_index_fdi", "shannon_entropy", "permutation_entropy"]
+  
+  regime_analyzer:
+    multi_user: true
+    data_source: "internal"
+    api_type: "internal" 
+    endpoints: ["internal_metrics"]
+    job_type: "regime_detection"
+    parallel_mode: "async"
+    data_model: "pandas"
+    compute_intensity: "medium"
+    metrics:
+      market_breadth: ["Advance_Decline", "Volume_Leadership", "Perf_Dispersion"]
+      regime_detection: ["Market_Regime", "Volatility_Regime", "Trend_Uniformity"]
+
+# ----
+#==== COMPOSITE EXECUTION ====
+composite_modules: 
+  core_composite:
+    depends_on:
+      - trend_analyzer
+      - volatility_analyzer
+      - sentiment_analyzer
+      - regime_analyzer 
+      - risk_analyzer 
+    multi_user: true
+    data_source: "internal"
+    api_type: "internal"
+    endpoints: ["klines", "futures_ticker_24hr"]   # endpoints: ["internal_metrics"]
+    job_type: "composite_scoring"
+    parallel_mode: "async"
+    data_model: "pandas"
+    output_type: "native"
+    cache_ttl: 1800
+    compute_intensity: "low"
+    timeout: 30 
+    retry_attempts: 2 
+    metric_config:  # 🆕 Opsiyonel - açık config
+      use_standard_decorator: true
+      auto_type_detection: true
+    metrics:
+      trend_scores: ["Trend_Composite", "Momentum_Composite"]
+      market_regimes: ["Volatility_Composite", "Risk_Composite", "Market_Regime"]
+      score_range: "[-1, 1]"
+      normalize_weights: true
+      weights:
+        trend_score: 0.6
+        momentum_score: 0.4
+      formula: |
+        regime_score = (
+            w1 * normalize(trend_composite)
+          + w2 * normalize(momentum_composite)
+        ) / (w1 + w2)
+      interpretation:
+        "-1.0 to -0.6": "Strong Bearish Regime"
+        "-0.6 to -0.3": "Weak Bearish / Correction"
+        "-0.3 to 0.3": "Neutral / Transition"
+        "0.3 to 0.6": "Weak Bullish"
+        "0.6 to 1.0": "Strong Bullish Regime"
+
+  comprehensive_composite:  # Trend, momentum ve volatilite metriklerini birleştir
+    depends_on:
+      - trend_analyzer
+      - volatility_analyzer
+      - microstructure_analyzer
+      - onchain_analyzer
+      - sentiment_analyzer
+      - advanced_signal_analyzer
+      - regime_analyzer
+      - risk_analyzer
+      
+    multi_user: true
+    data_source: "internal"
+    api_type: "internal"
+    endpoints: ["internal_metrics"]
+    job_type: "comprehensive_scoring"
+    parallel_mode: "async"
+    data_model: "pandas"
+    output_type: "native"
+    cache_ttl: 3600
+    compute_intensity: "medium"
+    metrics:
+      enhanced_composites: [
+        "Enhanced_Trend_Composite",
+        "Market_Sentiment_Composite", 
+        "Liquidity_Composite",
+        "Risk_Composite"
+        # ❌ "Comprehensive_Market_Analysis" ÇIKARILDI - bu zaten final output
+      ]
+    composite_config:
+      score_components: [
+        "enhanced_trend",      # 0.35 - Trend + Momentum
+        "market_regime",       # 0.20
+        "market_sentiment",    # 0.25 - Funding, OI, LS Ratio  
+        "liquidity_health",    # 0.25 - Order book + On-chain liquidity
+        "advanced_signals",    # 0.10
+        "risk_assessment"      # 0.15 - Volatility + Drawdown + Tail risk
+      ]
+    weights: [0.30, 0.20, 0.15, 0.15, 0.10, 0.10] 
+
+
+
+
+
+
+    # YENİ MODÜL ŞABLONU (compositeolmayan)
+
+#==== COMPOSITE_METRICS: Formül tanımları(matematiksel tanım), Bileşik skor - entegrasyon üretir - işlenmiş veri
+composite_metrics:
+  trend_composite:
+    category: "trend_composite"
+    description: "Combines multiple trend indicators (EMA, MACD, RSI, ADX)"
+    formula: "0.3*EMA + 0.3*MACD + 0.2*RSI + 0.2*ADX"
+    input: "pandas_dataframe"
+    output: "float_score"
+
+  momentum_composite:
+    category: "momentum_composite"
+    description: "Aggregated momentum signals from volatility and band metrics"
+    formula: "0.5*Bollinger_Bands + 0.5*Historical_Volatility"
+    input: "pandas_dataframe"
+    output: "float_score"
+
+  volatility_composite:
+    category: "volatility_composite"
+    description: "Combines multiple volatility indicators"
+    formula: |
+      0.25*ATR +
+      0.25*Historical_Volatility +
+      0.20*GARCH_1_1 +
+      0.15*Hurst_Exponent +
+      0.15*Entropy_Index
+    input: "volatility_data"
+    output: "float_score"
+    parameters:
+      lookback:
+        type: int
+        default: 30
+        description: "Number of periods to evaluate volatility consistency"
+    normalization:
+      method: "zscore"
+      clip_range: [-3, 3]
+    interpretation:
+      - "-1.0 to -0.6": "Very Low Volatility (Stable)"
+      - "-0.6 to -0.3": "Low Volatility"
+      - "-0.3 to 0.3": "Normal / Transitional"
+      - "0.3 to 0.6": "High Volatility"
+      - "0.6 to 1.0": "Extreme Volatility (High Risk)"
+
+  regime_composite:
+    category: "regime_composite"
+    description: "Market breadth and regime detection composite"
+    formula: "0.4*Advance_Decline + 0.3*Volume_Leadership + 0.3*Perf_Dispersion"
+    input: "market_data"
+    output: "float_score"
+
+  risk_composite:
+    category: "risk_composite" 
+    description: "Multi-dimensional risk assessment"
+    formula: |
+      0.25*Liquidation_Clusters + 
+      0.20*Liquidity_Gaps +
+      0.20*Cascade_Risk +
+      0.15*Forced_Selling +
+      0.10*Futures_Liq_Risk +
+      0.10*Liquidation_Cascade
+    input: "risk_data"
+    output: "float_score"
+    interpretation:
+      - "-1.0 to -0.6": "Very Low Risk (Bullish)"
+      - "-0.6 to -0.3": "Low Risk (Stable)" 
+      - "-0.3 to 0.3": "Neutral Risk (Normal)"
+      - "0.3 to 0.6": "High Risk (Caution)"
+      - "0.6 to 1.0": "Very High Risk (Bearish)"
+    
+
+
+
+  market_sentiment_composite:
+    category: "sentiment_composite" 
+    description: "Derivatives and on-chain sentiment integration"
+    formula: "0.25*Funding + 0.25*OI + 0.2*LS_Ratio + 0.3*OnChain"
+    input: "sentiment_onchain_data"
+    output: "float_score"
+    
+
+  liquidity_composite:
+    category: "liquidity_composite"
+    description: "Order book and on-chain liquidity assessment"
+    formula: "0.3*MarketImpact + 0.25*DepthElasticity + 0.2*LiquidityDensity + 0.25*StablecoinFlow"
+    input: "liquidity_data"
+    output: "float_score"
+ 
+
+# --- Secondary / Integrated Composites ---
+  enhanced_trend_composite:
+    category: "enhanced_composite"
+    description: "Multi-source trend analysis with microstructure and advanced signals"
+    formula: "0.5*ClassicalTrend + 0.3*MicrostructureTrend + 0.2*AdvancedTrend"
+    input: "multi_modal_data"
+    output: "float_score"
+    
+# --- Meta / Decision Level ---
+  confidence_composite:
+    category: "meta_score"
+    description: "Genel sistem güvenilirliği ve veri tutarlılığı puanı"
+    formula: "0.4*Data_Quality + 0.3*Signal_Consistency + 0.3*Latency_Stability"
+    input: "internal_metrics"
+    output: "float_score"
+    score_range: [0, 1]         # ✅ ← istisna (override)
+    interpretation:
+      - "0.0 to 0.4": "Low Confidence – Veriler gürültülü veya eksik"
+      - "0.4 to 0.7": "Moderate Confidence – Ortalama güvenilirlik"
+      - "0.7 to 1.0": "High Confidence – Güçlü ve kararlı sinyal"
+    metadata:
+      normalize: true
+      score_range: [0, 1]
+
+  trade_composite:
+    category: "decision_score"
+    description: "Al-Tut-Sat tavsiyesi üreten nihai kompozit skor"
+    formula: |
+      base_score = (
+        0.35*trend_composite +           
+        0.25*momentum_composite +        
+        0.2*market_sentiment_composite +   
+        0.1*liquidity_composite +
+        0.1*risk_composite
+      )
+    final_score: base_score * confidence_composite
+    output: "float_score"
+    interpretation:
+      - "-1.0 to -0.5": "SELL – Negatif trend ve zayıf piyasa koşulları"
+      - "-0.5 to 0.2": "HOLD – Kararsız/sideways piyasa"
+      - "0.2 to 1.0": "BUY – Pozitif momentum ve güçlü piyasa sinyali"
+    metadata:
+      normalize: true
+      confidence_weight: "Confidence_Composite"
+      score_range: [-1, 1]
+ 
+ 
+  advanced_signal_composite:
+    category: "signal_composite"
+    description: "Advanced signal processing and complexity analysis"
+    formula: |
+      0.3*Kalman_Filter_Trend +
+      0.25*Wavelet_Transform +
+      0.25*Fractal_Dimension_Index_FDI +
+      0.2*Shannon_Entropy
+    input: "price_series"
+    output: "float_score"
+
+  market_regime_composite:
+    category: "regime_composite"
+    description: "Multi-dimensional market regime detection"
+    formula: |
+      0.4*Market_Regime +
+      0.3*Volatility_Regime +
+      0.3*Trend_Uniformity
+    input: "market_data"
+    output: "float_score"
+    

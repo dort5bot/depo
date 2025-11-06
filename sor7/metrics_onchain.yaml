@@ -1,0 +1,78 @@
+# schemas/metrics_onchain.yaml
+meta:
+  version: "2025.1"
+  maintainer: "ysf-bot-framework"
+  last_updated: "2025-10-28"
+  description: "On-chain liquidity and network valuation metrics."
+
+metrics:
+
+  etf_net_flow:
+    category: "etf_flows"
+    description: "ETF Net Flow = Inflow - Outflow. Institutional liquidity measure."
+    formula: "NetFlow = Inflow - Outflow"
+    input: "etf_inflow_outflow_series"
+    output: "float_series"
+
+  stablecoin_flow:
+    category: "stablecoin_activity"
+    description: "Stablecoin net exchange flow (inflow - outflow)."
+    formula: "StableFlow = StableIn - StableOut"
+    input: "exchange_stablecoin_balances"
+    output: "float_series"
+
+  exchange_netflow:
+    category: "exchange_activity"
+    description: "Net exchange flow; > 0 inflow, < 0 outflow."
+    formula: "ExchangeFlow = Deposits - Withdrawals"
+    input: "exchange_wallet_activity"
+    output: "float_series"
+
+  net_realized_pl:
+    category: "profit_loss"
+    description: "Net realized profit minus realized loss."
+    formula: "NetPL = RealizedProfit - RealizedLoss"
+    input: "onchain_realized_data"
+    output: "float_series"
+
+  realized_cap:
+    category: "valuation"
+    description: "Total realized capitalization based on realized prices."
+    formula: "RealizedCap = Σ(Supply_i * Realized_Price_i)"
+    input: "price_supply_data"
+    output: "float_value"
+
+  nupl:
+    category: "profit_loss_ratio"
+    description: "Net Unrealized Profit/Loss ratio."
+    formula: "NUPL = (MarketCap - RealizedCap) / MarketCap"
+    input: "market_realized_caps"
+    output: "float_series"
+
+  exchange_whale_ratio:
+    category: "whale_behavior"
+    description: "Whale inflow ratio = top 10 deposits / total deposits."
+    formula: "WhaleRatio = WhaleDeposits / TotalDeposits"
+    input: "exchange_inflow_data"
+    output: "float_series"
+
+  mvrv_zscore:
+    category: "valuation"
+    description: "MVRV Z-Score measures deviation from fair value."
+    formula: "Z = (MarketCap - RealizedCap) / Std(MarketCap)"
+    input: "market_realized_std_data"
+    output: "float_series"
+
+  sopr:
+    category: "spending_behavior"
+    description: "Spent Output Profit Ratio; >1 = selling in profit."
+    formula: "SOPR = RealizedValue / SpentValue"
+    input: "spent_realized_value_data"
+    output: "float_series"
+
+  etf_flow_composite:
+    category: "composite_liquidity"
+    description: "Composite ETF flow score combining ETF, stablecoin and exchange flows."
+    formula: "Score = 0.5*NetETF + 0.3*NetStable - 0.2*NetExchange"
+    input: "aggregated_liquidity_streams"
+    output: "float_series"

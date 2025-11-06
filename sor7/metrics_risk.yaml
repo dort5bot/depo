@@ -1,0 +1,114 @@
+# 📁 analysis/schemas/metrics_risk.yaml
+meta:
+  version: "2025.1"
+  maintainer: "ysf-bot-framework"
+  last_updated: "2025-10-28"
+  description: "On-chain liquidity and network valuation metrics."
+
+metrics:
+  Liquidation_Clusters:
+    input_type: "pandas"
+    output_type: "pandas"
+    min_periods: 50
+    fillna: true
+    description: "Detect liquidation clusters in market data"
+    category: "risk_assessment"
+    parameters:
+      - name: "volatility_window"
+        type: "int"
+        default: 20
+        description: "Window for volatility calculation"
+  Cascade_Risk:
+    input_type: "pandas"
+    output_type: "pandas"
+    min_periods: 30
+    fillna: true
+    description: "Measure potential for liquidation cascades"
+    category: "risk_assessment"
+    parameters:
+      - name: "leverage_window"
+        type: "int"
+        default: 30
+        description: "Window for leverage analysis"
+  
+  SR_Impact:
+    input_type: "pandas"
+    output_type: "pandas"
+    min_periods: 20
+    fillna: true
+    description: "Support and Resistance level impact assessment"
+    category: "risk_assessment"
+    parameters:
+      - name: "sr_window"
+        type: "int"
+        default: 20
+        description: "Window for support/resistance calculation"
+  
+  Forced_Selling:
+    input_type: "pandas"
+    output_type: "pandas"
+    min_periods: 25
+    fillna: true
+    description: "Measure forced selling pressure in the market"
+    category: "risk_assessment"
+    parameters:
+      - name: "volume_window"
+        type: "int"
+        default: 20
+        description: "Window for volume normalization"
+  
+  Liquidity_Gaps:
+    input_type: "pandas"
+    output_type: "pandas"
+    min_periods: 40
+    fillna: true
+    description: "Detect liquidity gaps in order book data"
+    category: "risk_assessment"
+    parameters:
+      - name: "depth_quantile"
+        type: "float"
+        default: 0.1
+        description: "Quantile for thin liquidity threshold"
+  
+  Futures_Liq_Risk:
+    input_type: "pandas"
+    output_type: "pandas"
+    min_periods: 35
+    fillna: true
+    description: "Futures liquidation risk assessment"
+    category: "risk_assessment"
+    parameters:
+      - name: "funding_window"
+        type: "int"
+        default: 10
+        description: "Window for funding rate analysis"
+  
+  Liquidation_Cascade:
+    input_type: "pandas"
+    output_type: "pandas"
+    min_periods: 60
+    fillna: true
+    description: "Detect active liquidation cascades"
+    category: "risk_assessment"
+    parameters:
+      - name: "normalization_window"
+        type: "int"
+        default: 100
+        description: "Window for intensity normalization"
+  
+
+  Market_Stress:
+    input_type: "pandas"
+    output_type: "pandas"
+    min_periods: 45
+    fillna: true
+    description: "Comprehensive market stress indicator"
+    category: "risk_assessment"
+    parameters:
+      - name: "component_weight"
+        type: "str"
+        default: "equal"
+        description: "Weighting scheme for stress components"
+        
+
+
