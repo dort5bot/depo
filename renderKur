@@ -1,0 +1,14 @@
+Render Python Free KURULUM
+1. Render Dashboard’a gir
+2. “New” → “Web Service” tıkla
+3. GitHub hesabını bağla
+4. Deploy etmek istediğin repoyu seç
+-------------
+Name: (istediğin isim)
+Region: Frankfurt
+Branch: main
+Root Directory: (BOŞ BIRAK)
+
+----------
+Build Command: pip install -r requirements.txt
+Start Command: python main.py
