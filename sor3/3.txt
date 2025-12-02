@@ -1,0 +1,18 @@
+>>>>>	Bu yapıyla:
+		Handler 
+		→ Core'a symbol ve requested_scores gönderir
+
+		Core 
+		→ depends'lerden metrikleri belirler
+		→ Metric resolver'dan Metrik bilgisini ister
+		
+		Metric resolver
+		içindeki METRICS bilgisi ile, metrik dosyasını bilir
+		 → _MODULE_CONFIG + fonksiyon bilgisi gönderir
+		 (function → , columns →, params → )
+		 
+		Core 
+		→ metrikler için gereken ham veriyi oluşturur
+		→ metrikleri hesaplar
+		→ formüllerle birleştirir
+		→ handler'a sonuçları döndürür
