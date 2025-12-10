@@ -1,0 +1,46 @@
+{
+  "groups": [
+    {
+      "group_id": "grup_0",
+      "group_name": "grup_0",
+      "email_recipients": [
+        "ydf.kum@gmail.com"
+      ],
+      "cities": []
+    },
+	    {
+      "group_id": "grup_2",
+      "group_name": "tlistehdr",
+      "email_recipients": [
+		"dersdep@gmail.com"
+      ],
+      "cities": [
+        "bursa_sube",
+        "Balıkesir",
+		"izmir",
+        "Bursa",
+        "ankara",
+        "Düzce",
+        "Kocaeli",
+        "Sakarya",
+        "Tekirdağ",
+        "Yalova"
+      ]
+    },
+		    {
+      "group_id": "grup_3",
+      "group_name": "tkum",
+      "email_recipients": [
+		"ydf.kum@gmail.com"
+      ],
+      "cities": [
+        "bursa_sube",
+        "izmir",
+        "Bursa",
+        "Çanakkale",
+        "aksaray"
+      ]
+    }
+
+  ]
+}
