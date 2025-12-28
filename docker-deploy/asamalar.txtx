@@ -1,7 +1,7 @@
-1. .gitignore
-2. .dockerignore
-3. Dockerfile
-4. .github/workflows/docker-deploy.yml
+1) .gitignore
+2) .dockerignore
+3) Dockerfile
+4) .github/workflows/docker-deploy.yml
 
 
 ===
