@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ESHOT Panel PRO</title>
+
+<style>
+body { font-family: -apple-system; background:#f0f2f5; padding:10px; }
+.container { background:#fff; padding:15px; border-radius:15px; max-width:450px; margin:auto; }
+
+h2 { text-align:center; color:#d32f2f; }
+
+input, select {
+    width:100%;
+    padding:12px;
+    margin:6px 0;
+    border-radius:10px;
+    border:1px solid #ddd;
+}
+
+button {
+    width:100%;
+    padding:14px;
+    border:none;
+    border-radius:10px;
+    background:#d32f2f;
+    color:white;
+    font-weight:bold;
+}
+</style>
+</head>
+
+<body>
+
+<div class="container">
+<h2>🚌 ESHOT PRO ARAMA</h2>
+
+<label>Hat No (opsiyonel)</label>
+<input type="number" id="hat">
+
+<label>Durak No (opsiyonel)</label>
+<input type="number" id="durak">
+
+<label>Yön</label>
+<select id="yon">
+    <option value="0">Konak (0)</option>
+    <option value="1">Dönüş (1)</option>
+</select>
+
+<button onclick="akilliSorgu()">🔍 AKILLI ARA</button>
+
+<p style="font-size:12px; margin-top:10px;">
+✔ Hat + Yön → çalışır<br>
+✔ Yön + Durak → çalışır<br>
+✔ Hepsi → direkt gider
+</p>
+
+</div>
+
+<script>
+
+function formGonder(hat, yon, durak) {
+    const form = document.createElement('form');
+    form.method = 'POST';
+    form.action = "https://www.eshot.gov.tr/tr/OtobusumNerede/" + hat;
+
+    const fields = {
+        'hatId': hat,
+        'hatYon': yon,
+        'durakId': durak
+    };
+
+    for (const key in fields) {
+        const input = document.createElement('input');
+        input.type = 'hidden';
+        input.name = key;
+        input.value = fields[key];
+        form.appendChild(input);
+    }
+
+    document.body.appendChild(form);
+    form.submit();
+}
+
+function akilliSorgu() {
+    const hat = document.getElementById('hat').value.trim();
+    const durak = document.getElementById('durak').value.trim();
+    const yon = document.getElementById('yon').value;
+
+    // 🔥 1- FULL DATA
+    if (hat && durak) {
+        formGonder(hat, yon, durak);
+        return;
+    }
+
+    // 🔥 2- SADECE HAT + YÖN
+    if (hat && !durak) {
+        alert("Durak boş. Hat + Yön ile genel sayfa açılıyor.");
+        formGonder(hat, yon, "");
+        return;
+    }
+
+    // 🔥 3- SADECE DURAK + YÖN
+    if (!hat && durak) {
+        alert("Hat boş. Bu duraktan geçen hatları görebilirsin.");
+        formGonder("0", yon, durak); // trick
+        return;
+    }
+
+    // 🔥 4- BOŞ
+    alert("En az Hat veya Durak gir.");
+}
+
+</script>
+
+</body>
+  </html>
