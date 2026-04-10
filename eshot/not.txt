@@ -1,4 +1,4 @@
-BU KODU ÜSTTEKİNE nasıl ENTEGRE ETMELİ
+buBU KODU ÜSTTEKİNE nasıl ENTEGRE ETMELİ
 esv1.html
 hat+durak+yön BAŞARILI
 AMA
@@ -15,3 +15,37 @@ nedeni durak sorgusu başa sayfada ve yön gerektirmiyor
  
 
 --
+function sadeceDurakSorgu(durak) {
+    const form = document.createElement('form');
+    form.method = 'POST';
+    form.action = "https://www.eshot.gov.tr/tr/DuraktanGecenHatlar/" + durak;
+    form.target = "_blank";
+
+    const input1 = document.createElement('input');
+    input1.type = 'hidden';
+    input1.name = 'durakAdi';
+    input1.value = durak;
+
+    const input2 = document.createElement('input');
+    input2.type = 'hidden';
+    input2.name = 'durakId';
+    input2.value = durak;
+
+    form.appendChild(input1);
+    form.appendChild(input2);
+
+    document.body.appendChild(form);
+    form.submit();
+    document.body.removeChild(form);
+}
+
+
+
+// Durum 3: Sadece Durak
+if (hat === "" && durak !== "") {
+    sadeceDurakSorgu(durak);
+    return;
+}
+
+
+
