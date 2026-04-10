@@ -1,0 +1,418 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+    <title>ESHOT Canlı Takip Paneli PRO</title>
+    <style>
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            background: #f0f2f5;
+            padding: 12px;
+            margin: 0;
+            color: #1e2a3e;
+        }
+
+        .container {
+            background: white;
+            padding: 18px 16px 20px;
+            border-radius: 28px;
+            box-shadow: 0 12px 28px rgba(0, 0, 0, 0.08);
+            max-width: 500px;
+            margin: 0 auto;
+            transition: all 0.2s;
+        }
+
+        h2 {
+            color: #d32f2f;
+            text-align: center;
+            font-size: 1.55rem;
+            margin: 0 0 8px 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            letter-spacing: -0.3px;
+        }
+
+        h2::before {
+            content: "🚌";
+            font-size: 1.7rem;
+        }
+
+        .section-title {
+            font-size: 13px;
+            font-weight: 700;
+            color: #2c3e4e;
+            margin: 20px 0 10px 6px;
+            border-left: 5px solid #d32f2f;
+            padding-left: 10px;
+            text-transform: uppercase;
+            letter-spacing: 0.3px;
+        }
+
+        /* hızlı buton grid */
+        .fast-access {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 8px;
+            margin-bottom: 12px;
+        }
+
+        .fav-btn {
+            border: none;
+            color: white;
+            padding: 12px 4px;
+            border-radius: 18px;
+            font-weight: 600;
+            cursor: pointer;
+            font-size: 12px;
+            transition: 0.2s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            min-height: 52px;
+            box-shadow: 0 3px 6px rgba(0, 0, 0, 0.08);
+            text-shadow: 0 1px 2px rgba(0, 0, 0, 0.15);
+            background: #2c6e9e;
+            backdrop-filter: brightness(0.98);
+            line-height: 1.3;
+            text-align: center;
+            word-break: break-word;
+        }
+
+        .fav-btn:active {
+            transform: scale(0.96);
+            opacity: 0.85;
+        }
+
+        /* Yön renkleri (tam renk) */
+        .yon-0 {
+            background: #28a745 !important;
+        }
+
+        .yon-1 {
+            background: #007bff !important;
+        }
+
+        /* AKILLI ARAMA KUTUSU (gelişmiş panel) */
+        .smart-panel {
+            background: #f8fafc;
+            border-radius: 24px;
+            padding: 14px 16px 18px;
+            margin: 20px 0 12px;
+            border: 1px solid #e2edf2;
+            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.02);
+        }
+
+        .smart-title {
+            font-weight: 700;
+            font-size: 15px;
+            color: #0f3b2c;
+            margin-bottom: 12px;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            border-bottom: 1px dashed #cbd5e1;
+            padding-bottom: 6px;
+        }
+
+        .smart-title span {
+            background: #d32f2f10;
+            padding: 2px 8px;
+            border-radius: 30px;
+            font-size: 12px;
+            color: #b91c1c;
+        }
+
+        .input-group {
+            margin-bottom: 12px;
+        }
+
+        .input-group label {
+            font-size: 12px;
+            font-weight: 600;
+            color: #334155;
+            margin-left: 6px;
+            display: block;
+            margin-bottom: 4px;
+        }
+
+        input, select {
+            width: 100%;
+            padding: 12px 14px;
+            border-radius: 18px;
+            border: 1px solid #cbd5e1;
+            font-size: 15px;
+            background: white;
+            transition: 0.2s;
+            font-family: inherit;
+            outline: none;
+        }
+
+        input:focus, select:focus {
+            border-color: #d32f2f;
+            box-shadow: 0 0 0 3px rgba(211, 47, 47, 0.2);
+        }
+
+        .search-btn {
+            background: #d32f2f;
+            color: white;
+            border: none;
+            font-weight: 700;
+            padding: 14px 12px;
+            border-radius: 40px;
+            cursor: pointer;
+            width: 100%;
+            margin-top: 12px;
+            font-size: 16px;
+            transition: 0.2s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+        }
+
+        .search-btn:active {
+            transform: scale(0.97);
+            background: #b71c1c;
+        }
+
+        .info {
+            font-size: 10.5px;
+            color: #5e6f8d;
+            text-align: center;
+            margin-top: 18px;
+            line-height: 1.45;
+            background: #f1f5f9;
+            padding: 8px 12px;
+            border-radius: 28px;
+        }
+
+        .legend {
+            display: flex;
+            justify-content: center;
+            gap: 20px;
+            font-size: 11px;
+            margin: 8px 0 4px;
+            background: #fef9e6;
+            padding: 6px 12px;
+            border-radius: 40px;
+            width: fit-content;
+            margin-left: auto;
+            margin-right: auto;
+        }
+
+        .dot {
+            height: 10px;
+            width: 10px;
+            border-radius: 10px;
+            display: inline-block;
+            margin-right: 5px;
+        }
+
+        .note-extra {
+            font-size: 10px;
+            text-align: center;
+            margin-top: 12px;
+            color: #2c5a2e;
+            background: #eef2ff;
+            border-radius: 20px;
+            padding: 6px;
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h2>ESHOT Panel PRO</h2>
+
+    <div class="legend">
+        <span><span class="dot" style="background:#28a745"></span>Konak / Gidiş (0)</span>
+        <span><span class="dot" style="background:#007bff"></span>Dönüş (1)</span>
+		
+    </div>
+	
+	<p class="info">
+        🚍 ESHOT resmi sayfasına yönlendirir. "Bu Duraktan Geçen Tüm Hatları Göster" ile canlı mesafeleri görebilirsiniz.<br>
+        ⚡ Alsancak hızlı geçişler: 121 / 253 / 284 / 304
+    </p>
+
+    <!-- Bölüm 1: ★★★ GELİŞMİŞ AKILLI ARAMA (1.html'den alındı, manuel kutu tamamen yenilendi) ★★★ -->
+    <div class="smart-panel">
+        <div class="smart-title">
+            🔎 AKILLI ARA & BUL 
+            <span>PRO</span>
+        </div>
+        <div class="input-group">
+            <label>🚏 Hat No (isteğe bağlı)</label>
+            <input type="number" id="akilliHat" placeholder="Örn: 304, 470, 121" inputmode="numeric">
+        </div>
+        <div class="input-group">
+            <label>📍 Durak No (isteğe bağlı)</label>
+            <input type="number" id="akilliDurak" placeholder="Örn: 40016, 10030" inputmode="numeric">
+        </div>
+        <div class="input-group">
+            <label>🧭 Yön Seçimi</label>
+            <select id="akilliYon">
+                <option value="0">Konak / Gidiş (0)</option>
+                <option value="1">Dönüş (1)</option>
+            </select>
+        </div>
+        <button class="search-btn" onclick="akilliSorgu()">🔍 AKILLI SORGU BAŞLAT</button>
+        <div class="note-extra">
+            💡 İpucu: otobüs başlangıç durağını gösterir. HATTIN GEÇTİĞİ DURAKLAR kısmından durak seç <br>
+			Hat + Durak + Yön = tam sorgu.<br>
+            Sadece Hat + Yön → hattın genel duraklarını açar.<br>
+            Sadece Durak + Yön → duraktan geçen tüm hatları listeler.
+        </div>
+    </div>
+
+
+    <!-- Bölüm 2: Favoriler, Buca & Şirinyer ve özel hatlar -->
+    <div class="section-title">📍 Buca & Şirinyer · Konak'a gider</div>
+    <div class="fast-access">
+        <button class="fav-btn yon-0" onclick="hizliSorgu('304', '0', '40016')">📍 Buca B 40016</button>
+        <button class="fav-btn yon-1" onclick="hizliSorgu('304', '1', '40015')">📍 Buca B 40015</button>
+		
+        <button class="fav-btn yon-0" onclick="hizliSorgu('304', '0', '40010')">📍 Şirinyer 40010</button>
+        <button class="fav-btn yon-1" onclick="hizliSorgu('304', '1', '40009')">📍 Şirinyer 40009</button>
+		
+		<button class="fav-btn yon-0" onclick="hizliSorgu('374', '0', '40464')">📍 Hüdaverdi 40464</button>      
+		<button class="fav-btn yon-0" onclick="hizliSorgu('121', '0', '10019')">📍 Bahri 10019</button>
+		
+		<button class="fav-btn yon-0" onclick="hizliSorgu('304', '0', '40742')">📍 B 3Kuyular 40742</button>
+        <button class="fav-btn yon-1" onclick="hizliSorgu('304', '1', '40739')">📍 B 3Kuyular 40739</button>
+    </div>
+
+    <div class="section-title">🏙️ Konak & Alsancak Merkez</div>
+    <div class="fast-access">
+        <button class="fav-btn yon-1" onclick="hizliSorgu('304', '1', '10030')">📍 Knk 304 10030</button>
+        <button class="fav-btn yon-1" onclick="hizliSorgu('284', '1', '10040')">📍 Knk 284 10040</button>
+		
+        <button class="fav-btn yon-1" onclick="hizliSorgu('374', '1', '15531')">📍 YKM 1 15531</button>
+        <button class="fav-btn yon-1" onclick="hizliSorgu('72', '1', '15532')">📍 YKM 2 15532</button>
+		<button class="fav-btn yon-1" onclick="hizliSorgu('470', '1', '16402')">📍 Montrö 16402</button>
+		<button class="fav-btn yon-0" onclick="hizliSorgu('121', '1', '10108')">📍 Alsnck 10108</button>
+    </div>
+
+
+
+</div>
+
+<script>
+    // ----- ORTAK FORM GÖNDERME (eshot resmi action) -----
+    function formGonder(hat, yon, durak) {
+        // hat bilgisi boş olmamalı, ancak durak sorgusunda hat '0' gelebilir (durak bazlı)
+        // Eshot sistemi: action'daki hat parametresi geçerli olmalı. Durak sorgularında hatId=0 gönderebiliriz.
+        const targetHat = (hat && hat !== "") ? hat : "0";
+        
+        const form = document.createElement('form');
+        form.method = 'POST';
+        form.action = "https://www.eshot.gov.tr/tr/OtobusumNerede/" + targetHat;
+        form.target = "_blank";  // yeni sekmede aç, kullanıcı kaybolmasın
+        
+        const fields = {
+            'hatId': targetHat,
+            'hatYon': yon,
+            'durakId': durak || ""    // eğer durak boşsa boş string gönder
+        };
+        
+        for (const key in fields) {
+            const input = document.createElement('input');
+            input.type = 'hidden';
+            input.name = key;
+            input.value = fields[key];
+            form.appendChild(input);
+        }
+        
+        document.body.appendChild(form);
+        form.submit();
+        document.body.removeChild(form);
+    }
+    
+    // Hızlı erişim butonları için (eski mantık)
+    function hizliSorgu(hat, yon, durak) {
+        if (!hat || !durak) {
+            alert("Hata: Buton bilgileri eksik.");
+            return;
+        }
+        formGonder(hat, yon, durak);
+    }
+    
+    // ========= GELİŞMİŞ AKILLI SORGU (1.html mantığı + iyileştirme) =========
+    function akilliSorgu() {
+        const hatInput = document.getElementById('akilliHat');
+        const durakInput = document.getElementById('akilliDurak');
+        const yonSelect = document.getElementById('akilliYon');
+        
+        let hat = hatInput.value.trim();
+        let durak = durakInput.value.trim();
+        const yon = yonSelect.value;   // "0" veya "1"
+        
+        // Kullanıcı boşluk veya geçersiz karakterleri temizle (sayısal olmalı)
+        // sadece sayısal değerleri kabul et, değilse boş kabul et
+        if (hat !== "" && isNaN(Number(hat))) {
+            alert("Lütfen Hat No için geçerli bir sayı giriniz (örn: 304).");
+            return;
+        }
+        if (durak !== "" && isNaN(Number(durak))) {
+            alert("Lütfen Durak No için geçerli bir sayı giriniz (örn: 40016).");
+            return;
+        }
+        
+        // Durum 1: Hat ve durak dolu -> full sorgu (hat + yön + durak)
+        if (hat !== "" && durak !== "") {
+            // tam parametre ile sorgula
+            formGonder(hat, yon, durak);
+            return;
+        }
+        
+        // Durum 2: Sadece Hat + Yön (durak boş)
+        if (hat !== "" && durak === "") {
+            // ESHOT sayfasında hatId ile yön verilince o hattın genel gidiş/güzergah sayfası açılır
+            // Kullanıcıya bilgi ver
+            //alert(`🚌 "${hat}" hattı, Yön: ${yon === '0' ? 'Konak/Gidiş' : 'Dönüş'} için genel otobüs listesi açılacak.`);
+            formGonder(hat, yon, "");
+            return;
+        }
+        
+        // Durum 3: Sadece Durak + Yön (hat boş)
+        if (hat === "" && durak !== "") {
+            // Eshot'da durak bazlı sorgu için hatId=0 gönderilip durakId ile istek yapılır.
+            // O zaman "Bu Duraktan Geçen Tüm Hatları Göster" ekranı gelir. 
+            //alert(`📍 ${durak} nolu durak, Yön: ${yon === '0' ? 'Konak/Gidiş' : 'Dönüş'} için tüm hatlar listelenecek.`);
+            formGonder("0", yon, durak);
+            return;
+        }
+        
+        // Durum 4: her ikisi de boş
+        if (hat === "" && durak === "") {
+            alert("❌ En az bir alan doldurun: Hat No veya Durak No giriniz.");
+            return;
+        }
+    }
+    
+    // opsiyonel: Eğer kullanıcı input alanlarında enter tuşuna basarsa sorguyu tetikle
+    document.addEventListener("DOMContentLoaded", function() {
+        const hatField = document.getElementById('akilliHat');
+        const durakField = document.getElementById('akilliDurak');
+        
+        function onEnterHandler(e) {
+            if (e.key === "Enter") {
+                e.preventDefault();
+                akilliSorgu();
+            }
+        }
+        if (hatField) hatField.addEventListener('keypress', onEnterHandler);
+        if (durakField) durakField.addEventListener('keypress', onEnterHandler);
+    });
+</script>
+
+</body>
+</html>
