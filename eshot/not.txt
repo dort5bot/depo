@@ -1,0 +1,17 @@
+BU KODU ÜSTTEKİNE nasıl ENTEGRE ETMELİ
+esv1.html
+hat+durak+yön BAŞARILI
+AMA
+DURAK+YÖN İLE SORGU HATA VERİYOR
+nedeni durak sorgusu başa sayfada ve yön gerektirmiyor
+
+ 4.html
+ sadece furak no ile sorunsuz sorgu yapıyor
+ 
+ 
+ bunlar nasıl entegre edilmeli
+ hat+durak+yön BAŞARILI
+ sadece durak yazılsa yön seçiminden bağımsız sorgu yapmalı
+ 
+
+--
