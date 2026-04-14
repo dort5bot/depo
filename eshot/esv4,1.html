@@ -24,9 +24,16 @@ button{padding:10px;border:none;border-radius:8px;background:#d32f2f;color:#fff;
 <script id="worker-code" type="javascript/worker">
 importScripts('https://cdn.sheetjs.com/xlsx-0.20.1/package/dist/xlsx.full.min.js');
 
+
 self.onmessage = async (e) => {
   const { buffer, fileName } = e.data;
 
+  // 🔥 BURAYA EKLE
+  if (!buffer) {
+    self.postMessage({ type: 'error', msg: 'Buffer boş geldi' });
+    return;
+  }
+  
   try {
     const wb = XLSX.read(buffer, {
       type: 'array',
@@ -119,7 +126,7 @@ btn.onclick = async () => {
 
   const buffer = await file.arrayBuffer();
 
-  worker.postMessage({ buffer: buffer, fileName: file.name }, [buffer]);
+  worker.postMessage({ buffer: buffer, fileName: file.name });
 };
 
 worker.onmessage = (e) => {
