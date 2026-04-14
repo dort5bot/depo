@@ -20,4 +20,4 @@ içine entegresi nasıl sağlanır
 esv3-v1.html
 +
 esv3.html
-= esv4.html  oluştur. diğer kodlar aynı kalacak
+= esv4.html  oluştur. diğer kodlar isler dogru, aynı kalacak
