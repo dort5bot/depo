@@ -1,0 +1,23 @@
+excel işleme mantığını incele
+--
+mobil telefonda ram kısıtına takılabilir ni
+excel işleme işlemi,
+telefonda yapılacak
+dosya boyutu değişken 1 mb yada 80 mb yada daha yüksek olabilir
+sunucu yok
+amaç kasmadan sonuç üretecek.
+zaman ikinci planda, öncelik tam doğrulukta sonuç.
+
+esv3-v1.html
+ve
+esv3.html
+
+incele
+esv3.html
+içine entegresi nasıl sağlanır
+
+
+esv3-v1.html
++
+esv3.html
+= esv4.html  oluştur. diğer kodlar aynı kalacak
